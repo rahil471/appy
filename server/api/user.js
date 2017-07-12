@@ -63,4 +63,54 @@ module.exports = function(server, mongoose, logger) {
         });
     }());
 
+    // preferences
+    (function() {
+        const Log = logger.bind(Chalk.magenta("Login"));
+        const AuthAttempt = mongoose.model('authAttempt');
+        const Permission = mongoose.model('permission');
+        const Session = mongoose.model('session');
+        const User = mongoose.model('user');
+
+        // Log.note("Generating Login endpoint");
+
+        const headersValidation = Joi.object({
+            'authorization': Joi.string().required()
+        }).options({ allowUnknown: true });
+
+        const preferenceHandler = function(request, reply) {
+            return reply(null);
+        };
+
+        const userSchema = {
+            tow_factor: Joi.boolean().required()
+        };
+
+        server.route({
+            method: 'post',
+            path: '/user/{_userid}/preference',
+            config: {
+                handler: preferenceHandler,
+                auth: null,
+                description: 'preference',
+                tags: ['api', 'preference'],
+                validate: {
+                    headers: headersValidation,
+                    query: {
+                        tow_factor: Joi.boolean().required()
+                    }
+                },
+                pre: null,
+                plugins: {
+                    'hapi-swagger': {
+                        responseMessages: [
+                            { code: 200, message: 'Success' },
+                            { code: 400, message: 'Bad Request' },
+                            { code: 404, message: 'Not Found' },
+                            { code: 500, message: 'Internal Server Error' }
+                        ]
+                    }
+                }
+            },
+        });
+    }());
 };
