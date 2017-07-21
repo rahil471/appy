@@ -152,7 +152,8 @@ const config = {
         loglevel: {
             $filter: 'env',
             local: "DEBUG",
-            $default: "ERROR"
+            $default: "ERROR",
+            production: "ERROR"
         }
 
     }
@@ -163,7 +164,6 @@ const store = new Confidence.Store(config);
 
 
 exports.get = function(key) {
-
     return store.get(key, criteria);
 };
 

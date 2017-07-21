@@ -27,7 +27,7 @@ gulp.task('seed', [], function() {
         .then(function(result) {
             models = result;
 
-            RestHapi.config.loglevel = "DEBUG";
+            RestHapi.config.loglevel = "ERROR";
             const Log = RestHapi.getLogger("seed");
 
             const password = "root";
@@ -118,6 +118,14 @@ gulp.task('seed', [], function() {
                             username: 'manager@gmail.com',
                             password: password,
                             role: roles[1]._id,
+                            isActive: true
+                        },{
+                            firstName: 'user',
+                            lastName: 'normal',
+                            email: 'user@gmail.com',
+                            username: 'user@gmail.com',
+                            password: password,
+                            role: roles[0]._id,
                             isActive: true
                         },
                         {
