@@ -14,73 +14,73 @@ const before = lab.before;
 const Code = require('code');
 const expect      = Code.expect;
 
-describe('Functional Tests - User', ()=>{
-    // let server;
-    // let authorization;
-    // before((done)=>{
-    //     Composer((err, s)=>{
-    //         if(err) {
-    //             return done(err);
-    //         }
-    //         server = s;
-    //         let options = {
-    //             method: 'POST',
-    //             url: '/login',
-    //             payload: {
-    //                 email: "admin@gmail.com",
-    //                 password: "root"
-    //             }
-    //         }
-    //         server.inject(options, (res)=>{
-    //             let result = res.result;
-    //             if(result.statusCode === 200){
-    //                 authorization = result.authHeader;
-    //                 done();
-    //             } else {
-    //                 done(result.statusCode);
-    //             }
-    //         });
-    //     });
-    // });
+// describe('Functional Tests - User', ()=>{
+//     // let server;
+//     // let authorization;
+//     // before((done)=>{
+//     //     Composer((err, s)=>{
+//     //         if(err) {
+//     //             return done(err);
+//     //         }
+//     //         server = s;
+//     //         let options = {
+//     //             method: 'POST',
+//     //             url: '/login',
+//     //             payload: {
+//     //                 email: "admin@gmail.com",
+//     //                 password: "root"
+//     //             }
+//     //         }
+//     //         server.inject(options, (res)=>{
+//     //             let result = res.result;
+//     //             if(result.statusCode === 200){
+//     //                 authorization = result.authHeader;
+//     //                 done();
+//     //             } else {
+//     //                 done(result.statusCode);
+//     //             }
+//     //         });
+//     //     });
+//     // });
 
-    // it('init', (done)=>{
-    //     expect(server).to.exist();
-    //     done();
-    // });
+//     // it('init', (done)=>{
+//     //     expect(server).to.exist();
+//     //     done();
+//     // });
 
-    // it('should fetch users', (done)=>{
-    //     let options = {
-    //         method: 'GET',
-    //         url: '/user',
-    //         headers:{
-    //             authorization: authorization
-    //         }
-    //     }
-    //     server.inject(options, (res)=>{
-    //         var result = res.result;
-    //         expect(res.statusCode).to.equal(200);
-    //         expect(req.result).to.be.an.array();
-    //         done();
-    //     })
-    // });
+//     // it('should fetch users', (done)=>{
+//     //     let options = {
+//     //         method: 'GET',
+//     //         url: '/user',
+//     //         headers:{
+//     //             authorization: authorization
+//     //         }
+//     //     }
+//     //     server.inject(options, (res)=>{
+//     //         var result = res.result;
+//     //         expect(res.statusCode).to.equal(200);
+//     //         expect(req.result).to.be.an.array();
+//     //         done();
+//     //     })
+//     // });
 
-});
+// });
 
-describe('Functional Tests - Authentication', ()=>{
+// describe('Functional Tests - Authentication', ()=>{
 
-    it('should be a valid login', (done)=>{
-        let options = {
-            method: 'POST',
-            url: '/login',
-            payload: {
-                email: "user@gmail.com",
-                password: "root"
-            }
-        }
-        server.inject(options, (res)=>{
-            var result = res.result;
-            expect(res.statusCode).to.equal(200);
-            done();
-        })
-    });
-});
+//     it('should be a valid login', (done)=>{
+//         let options = {
+//             method: 'POST',
+//             url: '/login',
+//             payload: {
+//                 email: "user@gmail.com",
+//                 password: "root"
+//             }
+//         }
+//         server.inject(options, (res)=>{
+//             var result = res.result;
+//             expect(res.statusCode).to.equal(200);
+//             done();
+//         })
+//     });
+// });

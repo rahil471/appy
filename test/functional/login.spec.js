@@ -1,5 +1,6 @@
 'use strict';
 
+const LabbableServer = require('../../server.js');
 const RestHapi = require('rest-hapi');
 const Composer = require('../../index');
 const Lab = require('lab');
@@ -13,11 +14,12 @@ const before = lab.before;
 
 const Code = require('code');
 const expect      = Code.expect;
+const mongoose = require('mongoose');
 
 describe('Functional Tests - User', ()=>{
     let server;
     before((done)=>{
-        Composer((err, s)=>{
+        LabbableServer.ready((err, s)=>{
             if(err) {
                 return done(err);
             }
@@ -26,8 +28,9 @@ describe('Functional Tests - User', ()=>{
         });
     });
 
-    it('init', (done)=>{
+    it('initializes.', (done) => {
         expect(server).to.exist();
+        expect(LabbableServer.isInitialized()).to.equal(true);
         done();
     });
 
