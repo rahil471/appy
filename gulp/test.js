@@ -7,5 +7,5 @@ gulp.task('test', function() {
   return gulp.src([
     gulp.paths.src + 'test/**/*.spec.js'
   ])
-  .pipe(lab());
+  .pipe(lab(['-c']));
 });
