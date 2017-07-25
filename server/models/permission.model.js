@@ -52,6 +52,7 @@ module.exports = function (mongoose) {
 
       return RestHapi.find(User, user._id, { $embed: ['permissions', 'role.permissions', 'groups.permissions'] }, Log)
         .then(function (result) {
+          
           let user = result;
 
           //EXPL: base permissions are set by the user's role
@@ -94,7 +95,6 @@ module.exports = function (mongoose) {
               permissions.push(user_permission);
             }
           });
-
           return permissions;
         });
     },

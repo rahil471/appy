@@ -247,6 +247,184 @@ module.exports = function(server, mongoose, logger) {
         });
     }());
 
+    //social login ep
+    (function(){
+        server.route({
+            method: 'GET',
+            path: '/login/google',
+            config: {
+                handler: function(request, reply){
+                    //google oauth logic here
+                    reply('success');
+                },
+                auth: null,
+                description: 'User login via google',
+                tags: ['api', 'Login'],
+                //pre: loginPre,
+                plugins: {
+                    'hapi-swagger': {
+                        responseMessages: [
+                            { code: 200, message: 'Success' },
+                            { code: 400, message: 'Bad Request' },
+                            { code: 404, message: 'Not Found' },
+                            { code: 500, message: 'Internal Server Error' }
+                        ]
+                    }
+                }
+            },
+        });
+
+        server.route({
+            method: 'GET',
+            path: '/login/facebook',
+            config: {
+                handler: function(request, reply){
+                    //facebook oauth logic here
+                    reply('success');
+                },
+                auth: null,
+                description: 'User login via facebook',
+                tags: ['api', 'Login'],
+                //pre: loginPre,
+                plugins: {
+                    'hapi-swagger': {
+                        responseMessages: [
+                            { code: 200, message: 'Success' },
+                            { code: 400, message: 'Bad Request' },
+                            { code: 404, message: 'Not Found' },
+                            { code: 500, message: 'Internal Server Error' }
+                        ]
+                    }
+                }
+            },
+        });
+
+        server.route({
+            method: 'GET',
+            path: '/login/github',
+            config: {
+                handler: function(request, reply){
+                    //github oauth logic here
+                    reply('success');
+                },
+                auth: null,
+                description: 'User login via github',
+                tags: ['api', 'Login'],
+                //pre: loginPre,
+                plugins: {
+                    'hapi-swagger': {
+                        responseMessages: [
+                            { code: 200, message: 'Success' },
+                            { code: 400, message: 'Bad Request' },
+                            { code: 404, message: 'Not Found' },
+                            { code: 500, message: 'Internal Server Error' }
+                        ]
+                    }
+                }
+            },
+        });
+
+        server.route({
+            method: 'GET',
+            path: '/login/twitter',
+            config: {
+                handler: function(request, reply){
+                    //twitter oauth logic here
+                    reply('success');
+                },
+                auth: null,
+                description: 'User login via twitter',
+                tags: ['api', 'Login'],
+                //pre: loginPre,
+                plugins: {
+                    'hapi-swagger': {
+                        responseMessages: [
+                            { code: 200, message: 'Success' },
+                            { code: 400, message: 'Bad Request' },
+                            { code: 404, message: 'Not Found' },
+                            { code: 500, message: 'Internal Server Error' }
+                        ]
+                    }
+                }
+            },
+        });
+
+        server.route({
+            method: 'GET',
+            path: '/login/instagram',
+            config: {
+                handler: function(request, reply){
+                    //instagram oauth logic here
+                    reply('success');
+                },
+                auth: null,
+                description: 'User login via instagram',
+                tags: ['api', 'Login'],
+                //pre: loginPre,
+                plugins: {
+                    'hapi-swagger': {
+                        responseMessages: [
+                            { code: 200, message: 'Success' },
+                            { code: 400, message: 'Bad Request' },
+                            { code: 404, message: 'Not Found' },
+                            { code: 500, message: 'Internal Server Error' }
+                        ]
+                    }
+                }
+            },
+        });
+
+        server.route({
+            method: 'GET',
+            path: '/login/linkedin',
+            config: {
+                handler: function(request, reply){
+                    //loinkedin oauth logic here
+                    reply('success');
+                },
+                auth: null,
+                description: 'User login via linkedin',
+                tags: ['api', 'Login'],
+                //pre: loginPre,
+                plugins: {
+                    'hapi-swagger': {
+                        responseMessages: [
+                            { code: 200, message: 'Success' },
+                            { code: 400, message: 'Bad Request' },
+                            { code: 404, message: 'Not Found' },
+                            { code: 500, message: 'Internal Server Error' }
+                        ]
+                    }
+                }
+            },
+        });
+
+        server.route({
+            method: 'GET',
+            path: '/login/dropbox',
+            config: {
+                handler: function(request, reply){
+                    //dropbox oauth logic here
+                    reply('success');
+                },
+                auth: null,
+                description: 'User login via dropbox',
+                tags: ['api', 'Login'],
+                //pre: loginPre,
+                plugins: {
+                    'hapi-swagger': {
+                        responseMessages: [
+                            { code: 200, message: 'Success' },
+                            { code: 400, message: 'Bad Request' },
+                            { code: 404, message: 'Not Found' },
+                            { code: 500, message: 'Internal Server Error' }
+                        ]
+                    }
+                }
+            },
+        });
+    }());
+
 
     // Forgot Password Endpoint
     (function() {
