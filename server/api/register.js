@@ -25,6 +25,25 @@ module.exports = function(server, mongoose, logger) {
         Log.note("Generating Registration endpoint");
 
         const registerPre = [{
+            assign: 'passwordIsValid',
+            method: function(request, reply){
+                const conditions = {
+                    level: Config.get('/passwordDifficulty'),
+                    password: request.payload.user.password
+                }
+                switch(conditions.level){
+                    case 'easy':
+                        return conditions.password.length >= 5 ? reply(true) : reply(Boom.badRequest(`Password does not match given criteria (${conditions.level})`));
+                    break;
+                    case 'medium':
+                        return conditions.password.length >= 7 ? reply(true) : reply(Boom.badRequest(`Password does not match given criteria (${conditions.level})`));
+                    break;
+                    case 'hard':
+                        return conditions.password.length >= 9 ? reply(true) : reply(Boom.badRequest(`Password does not match given criteria (${conditions.level})`));
+                    break;
+                }
+            }
+        },{
             assign: 'emailCheck',
             method: function(request, reply) {
 
@@ -77,7 +96,7 @@ module.exports = function(server, mongoose, logger) {
             let keyHash = {};
             let user = {};
             let originalPassword = "";
-
+ 
             Session.generateKeyHash(Log)
                 .then(function(result) {
                     keyHash = result;
@@ -192,6 +211,7 @@ module.exports = function(server, mongoose, logger) {
                             email: Joi.string().email().required(),
                             role: Joi.array().items(Joi.string()).required(),
                             password: Joi.string().required(),
+                            username: Joi.string().required()
                         }).required(),
                         registerType: Joi.any().valid(['Register', 'Invite']).required()
                     }

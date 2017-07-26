@@ -33,6 +33,12 @@ const config = {
         production: process.env.PORT,
         $default: constants.PORT
     },
+    passwordDifficulty: {
+        $filter: 'env',
+        production: 'hard',
+        local: 'easy',
+        $default: 'medium'
+    },
     constants: constants,
     expirationPeriod: {
         short: '10m',
