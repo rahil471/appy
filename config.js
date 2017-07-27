@@ -39,6 +39,7 @@ const config = {
         local: 'easy',
         $default: 'medium'
     },
+    loginWith: ['email', 'username'],
     constants: constants,
     expirationPeriod: {
         short: '10m',
@@ -113,8 +114,8 @@ const config = {
             }
         },
         cors: {
-            additionalHeaders: ['X-Total-Count', 'X-Auth-Header', 'X-Refresh-Token'],
-            additionalExposedHeaders: ['X-Total-Count', 'X-Auth-Header', 'X-Refresh-Token']
+            additionalHeaders: ['X-Total-Count', 'X-Auth-Header', 'X-Refresh-Token', 'scope'],
+            additionalExposedHeaders: ['X-Total-Count', 'X-Auth-Header', 'X-Refresh-Token', 'scope']
         },
         absoluteModelPath: true,
         modelPath: __dirname + '/server/models',
