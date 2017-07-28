@@ -44,18 +44,26 @@ module.exports = function(server, mongoose, logger) {
                 }
             }
         },{
-            assign: 'emailCheck',
+            assign: 'userCheck',
             method: function(request, reply) {
 
-                const conditions = {
-                    email: request.payload.user.email
-                };
-
-                User.findOne(conditions)
+                const loginWith = Config.get('/loginWith');
+                const conditions = [];
+                let key;
+                for(var i in loginWith){
+                    key = loginWith[i];
+                    if(!request.payload.user[key]){
+                        return reply(Boom.badRequest(`${key} is required.`));
+                    } else {
+                        conditions.push({[key] : request.payload.user[key]});
+                    }
+                }
+                console.log(conditions);
+                User.findOne({$or: conditions})
                     .then(function(user) {
-
+                        console.log(request.payload.user.username);
                         if (user) {
-                            return reply(Boom.conflict('Email already in use.'));
+                            return reply(Boom.conflict(`User already exists. Conflict in ${loginWith}`));
                         }
 
                         return reply(true);
@@ -258,7 +266,7 @@ module.exports = function(server, mongoose, logger) {
                         return reply(Boom.badImplementation('There was an error accessing the database.'));
                     });
             }
-        }, ];
+        }];
 
         const sendActivationEmailHandler = function(request, reply) {
 

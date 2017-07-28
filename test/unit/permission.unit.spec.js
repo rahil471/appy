@@ -19,7 +19,7 @@ const expect      = Code.expect;
 //const User = mongoose.model('user',userschema);
 
 //const usertests = require('./unit.spec');
-describe('Functional Tests - Permission', ()=>{
+describe('Unit Tests - Permission', ()=>{
     let server;
     let Permission;
     before((done)=>{

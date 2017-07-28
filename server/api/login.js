@@ -28,13 +28,28 @@ module.exports = function(server, mongoose, logger) {
         Log.note("Generating Login endpoint");
 
         const loginPre = [{
+                assign: 'primarykey',
+                method: function(request, reply){
+                    return reply(Config.get('/loginWith')[0]);
+                }
+            },{
+                assign: 'isValid',
+                method: function(request, reply){
+                    const key = request.pre.primarykey; //key using which login is set
+                    console.log(key);
+                    if(!request.payload[key]){
+                        return reply(Boom.badRequest(`Application is configured to use ${key}, which is missing.`));
+                    }
+                    return reply();
+                }
+            },{
                 assign: 'abuseDetected',
                 method: function(request, reply) {
-
+                    const key = request.pre.primarykey
                     const ip = request.info.remoteAddress;
-                    const email = request.payload.email;
+                    const logonid = request.payload[key];
 
-                    AuthAttempt.abuseDetected(ip, email, Log)
+                    AuthAttempt.abuseDetected(ip, logonid, Log)
                         .then(function(detected) {
                             if (detected) {
                                 return reply(Boom.badRequest('Maximum number of auth attempts reached. Please try again later.'));
@@ -50,11 +65,11 @@ module.exports = function(server, mongoose, logger) {
             {
                 assign: 'user',
                 method: function(request, reply) {
-
-                    const email = request.payload.email;
+                    const key = Config.get('/loginWith')[0];
+                    const value = request.payload[key];
                     const password = request.payload.password;
 
-                    User.findByCredentials(email, password, Log)
+                    User.findByGivenKey(key, value, password, Log)
                         .then(function(user) {
                             return reply(user);
                         })
@@ -67,15 +82,15 @@ module.exports = function(server, mongoose, logger) {
             {
                 assign: 'logAttempt',
                 method: function(request, reply) {
-
+                    const key = request.pre.primarykey
                     if (request.pre.user) {
                         return reply();
                     }
 
                     const ip = request.info.remoteAddress;
-                    const email = request.payload.email;
+                    const logonid = request.payload[key];
 
-                    AuthAttempt.createInstance(ip, email, Log)
+                    AuthAttempt.createInstance(ip, logonid, Log)
                         .then(function(authAttempt) {
                             return reply(Boom.badRequest('Invalid Email or Password.'));
                         })
@@ -228,7 +243,9 @@ module.exports = function(server, mongoose, logger) {
                 tags: ['api', 'Login'],
                 validate: {
                     payload: {
-                        email: Joi.string().email().lowercase().required(),
+                        username: Joi.string().lowercase(),
+                        phonenumber: Joi.string(),
+                        email: Joi.string().email().lowercase(),
                         password: Joi.string().required()
                     }
                 },

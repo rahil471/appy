@@ -6,7 +6,7 @@ module.exports = function (mongoose) {
   const modelName = "authAttempt";
   const Types = mongoose.Schema.Types;
   const Schema = new mongoose.Schema({
-    email: {
+    logonid: {
       type: Types.String,
       required: true
     },
@@ -25,11 +25,11 @@ module.exports = function (mongoose) {
     routeOptions: {
       alias: "auth-attempt"
     },
-    createInstance: function (ip, email, Log) {
+    createInstance: function (ip, logonvalue, Log) {
 
       const document = {
         ip,
-        email: email.toLowerCase(),
+        logonid: logonvalue.toLowerCase(),
         time: new Date()
       };
 
@@ -39,7 +39,7 @@ module.exports = function (mongoose) {
         });
     },
 
-    abuseDetected: function (ip, email, Log) {
+    abuseDetected: function (ip, logonvalue, Log) {
       const self = this;
 
       const lockOutPeriod = Config.get('/lockOutPeriod');
@@ -59,7 +59,7 @@ module.exports = function (mongoose) {
 
           const query = {
             ip,
-            email: email.toLowerCase(),
+            logonid: logonvalue.toLowerCase(),
             time: expirationDate
           };
 

@@ -39,7 +39,7 @@ const config = {
         local: 'easy',
         $default: 'medium'
     },
-    loginWith: ['email', 'username'],
+    loginWith: ['username'],
     constants: constants,
     expirationPeriod: {
         short: '10m',

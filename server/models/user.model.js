@@ -256,6 +256,27 @@ module.exports = function(mongoose) {
                         return user;
                     }
                 });
+        },
+
+        findByGivenKey: function(key, value, password, Log){
+            const query = {
+                [key] : value
+            }
+            let user = {};
+            return this.findOne(query).lean().then((result)=>{
+                user = result;
+                if(!user){
+                    return false;
+                }
+
+                const source = user.password;
+                return Bcrypt.compare(password, source);
+            })
+            .then((passwordMatch)=>{
+                if(passwordMatch){
+                    return user;
+                }
+            });
         }
     };
 
