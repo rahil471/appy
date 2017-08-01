@@ -1,0 +1,15 @@
+version: '2' # specify docker-compose version
+
+# Define the services/containers to be run
+services:
+ appy: #name of the second service
+     build: ./ # specify the directory of the Dockerfile
+     ports:
+       - "8125:8125" #specify ports forewarding
+     links:
+       - database # link this service to the database service
+
+ database: # name of the third service
+   image: mongo # specify image to build container from
+   ports:
+     - "27018:27018" # specify port forewarding
