@@ -16,4 +16,4 @@ EXPOSE 8125
 
 #RUN gulp seed
 
-CMD ["node", "server.js"]
+CMD ["npm", "start"]

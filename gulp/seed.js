@@ -21,9 +21,15 @@ gulp.task('seed', [], function() {
     RestHapi.config.absoluteModelPath = true;
     RestHapi.config.modelPath = __dirname + "/../server/models";
 
-    Mongoose.connect(restHapiConfig.mongo.URI);
+    Mongoose.connect(restHapiConfig.mongo.URI, {server:{auto_reconnect: true}});
+    let db = Mongoose.connection;
+    db.on('error', function(error){
+        console.log(`Error in connection- ${error}`);
+    });
 
-    return RestHapi.generateModels(Mongoose)
+    db.on('connected', function(){
+        console.log('Mongooose connected');
+        return RestHapi.generateModels(Mongoose)
         .then(function(result) {
             models = result;
 
@@ -184,6 +190,7 @@ gulp.task('seed', [], function() {
                     Log.error(error);
                 });
         });
+    });
 });
 
 gulp.task('update-permissions', [], function() {
