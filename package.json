@@ -1,6 +1,6 @@
 {
   "name": "appy",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "A user system leveraging rest-hapi to bootstrap your app.",
   "scripts": {
     "start": "gulp seed ; gulp",
