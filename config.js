@@ -109,8 +109,8 @@ const config = {
         mongo: {
             URI: {
                 $filter: 'env',
-                local: 'mongodb://localhost/user_management_appy',
-                $default: 'mongodb://localhost/user_management_appy'
+                local: 'mongodb://database/user_management_appy',
+                $default: 'mongodb://database/user_management_appy'
             }
         },
         cors: {

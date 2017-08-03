@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "A user system leveraging rest-hapi to bootstrap your app.",
   "scripts": {
-    "start": "gulp",
+    "start": "gulp seed ; gulp",
     "test": "gulp test"
   },
   "engines": {
