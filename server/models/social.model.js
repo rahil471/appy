@@ -12,7 +12,7 @@ module.exports = function(mongoose) {
             type: Types.String,
             required: true,
             unique: true,
-            enum: ["facebook", "twitter", "instagram", "linkedin", "github", "google", "amazon", "dropbox", "foursquare", "imgur", "meetup", "wordpress", "tumblr"]
+            enum: ["facebook", "twitter", "instagram", "linkedin", "github", "google"]
         },
         clientid: {
             type: Types.String,
@@ -24,12 +24,22 @@ module.exports = function(mongoose) {
             required: true,
             unique: true
         },
-        attributes: [{
-            type: Types.String
-        }],
-        permissions: [{
+        scope: [{
             type: Types.String,
-        }]
+        }],
+        successUrl: {
+            type: Types.String,
+            required: true
+        },
+        errorUrl: {
+            type: Types.String,
+            required: true
+        },
+        status: {
+            type: Types.String,
+            enum: ['active', 'inactive'],
+            default: 'active'
+        }
     }, { collection: modelName });
 
     Schema.statics = {

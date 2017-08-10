@@ -21,7 +21,10 @@ const constants = {
         REFRESH: 'jwt-with-session-and-refresh-token'
     },
     PORT: 8125,
-    APP_TITLE: 'User Management'
+    APP_TITLE: 'User Management',
+    HOST_LOCAL: 'http://127.0.0.1:',
+    HOST_PRODUCTION: 'http://127.0.0.1:',
+    HOST_DEFAULT: 'http://127.0.0.1:'
 };
 
 const config = {
@@ -93,9 +96,21 @@ const config = {
     },
     clientURL: {
         $filter: 'env',
-        local: 'http://localhost:' + constants.PORT,
-        production: 'http://localhost:' + constants.PORT,
-        $default: 'http://localhost:' + constants.PORT
+        local: constants.HOST_LOCAL + constants.PORT,
+        production: constants.HOST_PRODUCTION + constants.PORT,
+        $default: constants.HOST_DEFAULT + constants.PORT
+    },
+    defaultSuccessURL: {
+        $filter: 'env',
+        local: constants.HOST_LOCAL + constants.PORT + '/static/social_poc/success.html',
+        production: constants.HOST_PRODUCTION + constants.PORT + '/static/social_poc/success.html',
+        $default: constants.HOST_DEFAULT + constants.PORT + '/static/social_poc/success.html'
+    },
+    defaultErrorURL: {
+        $filter: 'env',
+        local: constants.HOST_LOCAL + constants.PORT + '/static/social_poc/error.html',
+        production: constants.HOST_PRODUCTION + constants.PORT + '/static/social_poc/error.html',
+        $default: constants.HOST_DEFAULT + constants.PORT + '/static/social_poc/error.html'
     },
     restHapiConfig: {
         appTitle: constants.APP_TITLE,

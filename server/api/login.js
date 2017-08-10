@@ -6,6 +6,7 @@ const Bcrypt = require('bcryptjs');
 const Chalk = require('chalk');
 const Jwt = require('jsonwebtoken');
 const RestHapi = require('rest-hapi');
+const _ = require("underscore");
 
 const Config = require('../../config');
 const Token = require('../token');
@@ -14,6 +15,24 @@ const USER_ROLES = Config.get('/constants/USER_ROLES');
 const AUTH_STRATEGIES = Config.get('/constants/AUTH_STRATEGIES');
 const expirationPeriod = Config.get('/expirationPeriod');
 const authStrategy = Config.get('/restHapiConfig/authStrategy');
+
+//Passport Middlewares
+const passport = require('hapi-passport');
+const GitHubStrategy = require('passport-github');
+const GoogleStrategy = require('passport-google-oauth2');
+const FacebookStrategy = require('passport-facebook');
+const TwitterStrategy = require('passport-twitter');
+const InstagramStrategy = require('passport-instagram');
+const LinkedInStrategy = require('passport-linkedin');
+const DropboxOAuth2Strategy = require('passport-dropbox-oauth2');
+
+const UserOperations = require('../utils/user');
+const clientURL = Config.get('/clientURL');
+const defaultSuccessUrl = Config.get('/defaultSuccessURL');;
+const defaultErrorUrl = Config.get('/defaultErrorURL');;
+console.log(defaultErrorUrl);
+const saml2 = require('saml2-js');
+const fs = require('fs');
 
 module.exports = function(server, mongoose, logger) {
 
@@ -247,184 +266,134 @@ module.exports = function(server, mongoose, logger) {
         });
     }());
 
-    //social login ep
-    (function(){
+    //social login Endpoint
+    (function() {
+        const Log = logger.bind(Chalk.magenta("LoginSocial"));
+        const AuthAttempt = mongoose.model('authAttempt');
+        const User = mongoose.model('user');
+        const Role = mongoose.model('role');
+        const Permission = mongoose.model('permission');
+        const userOperations = new UserOperations();
+
+        /**
+         * initialize provider for social login 
+         * @function
+         * @param {string} provider - social login provider name ex.google
+         * @param {instance} strategy - passport strategy
+         * @param {object} credentials - provider app credentials 
+         */
+        function initSocial(provider, strategy, credentials) {
+            return passport(new strategy(credentials, function verify(accessToken, refreshToken, profile, verified) {
+
+                let userdata = {
+                    email: profile.emails[0].value || '',
+                    id: profile.id,
+                    username: profile.username || '',
+                    name: profile.displayName || '',
+                    gravatar_id: profile.gravatar_id || '',
+                    provider: profile.provider || '',
+                    photo: profile.photos[0].value
+                }
+                userOperations.processSocialLogin(userdata, Log)
+                    .then(finaldata => verified(null, finaldata))
+                    .catch(error => verified(error));
+            }));
+        }
+
+        /**
+         * checks for provider settings are present in database or not! 
+         * @function 
+         */
+        const socialLoginPre = [{
+            assign: 'social',
+            method: (request, reply) => {
+                userOperations.getSocialLoginAppCredentials(request.params.provider)
+                    .then(result => {
+                        if (result) {
+                            return reply(result);
+                        } else {
+                            // return reply.redirect(`${defaultErrorUrl}?error=Invalid provider`);
+                            reply(Boom.notFound("Not Found"));
+                        }
+                    })
+                    .catch(error => Boom.gatewayTimeout('An error occurred.'));
+            }
+        }];
+
+        /**
+         * provides the strategy instance of requested provider!  
+         * @function
+         * @param {string} provider - social login provider name ex.google
+         */
+        function getSocialStrategy(provider) {
+            switch (provider) {
+                case "google":
+                    return GoogleStrategy;
+                    break;
+                case "github":
+                    return GitHubStrategy;
+                    break;
+                case "facebook":
+                    return FacebookStrategy;
+                    break;
+                case "twitter":
+                    return TwitterStrategy;
+                    break;
+                case "instagram":
+                    return InstagramStrategy;
+                    break;
+                case "linkedin":
+                    return LinkedInStrategy;
+                    break;
+                default:
+                    return "NO_STRATEGY";
+                    break;
+            }
+        }
+
+        function socialLoginHandler(request, reply) {
+            let credentials = {};
+            if (["twitter", "linkedin"].indexOf(request.params.provider) > -1) {
+                credentials = {
+                    consumerKey: request.pre.social.clientid || "CONSUMER_KEY",
+                    consumerSecret: request.pre.social.clientsecret || "CONSUMER_SECRET",
+                    callbackURL: `${clientURL}/login/${request.params.provider}`,
+                    scope: request.pre.social.scope || []
+                };
+            } else {
+                credentials = {
+                    clientID: request.pre.social.clientid || "CONSUMER_KEY",
+                    clientSecret: request.pre.social.clientsecret || "CONSUMER_SECRET",
+                    callbackURL: `${clientURL}/login/${request.params.provider}`,
+                    scope: request.pre.social.scope || []
+                };
+            }
+            let socialStrategy = initSocial(request.pre.social.name, getSocialStrategy(request.pre.social.name), credentials);
+
+            return socialStrategy({
+                onSuccess: function(info, request, reply) {
+                    return reply.redirect(`${request.pre.social.successUrl}?status=200&authHeader=${info.authHeader}&refreshToken=${info.refreshToken}`);
+                },
+                onError: function(error, request, reply) {
+                    Log.error(error);
+                    return reply.redirect(`${request.pre.social.successUrl}?error=${error}`);
+                }
+            })(request, reply);
+
+        }
         server.route({
             method: 'GET',
-            path: '/login/google',
+            path: '/login/{provider}',
             config: {
-                handler: function(request, reply){
-                    //google oauth logic here
-                    reply('success');
-                },
+                handler: socialLoginHandler,
                 auth: null,
                 description: 'User login via google',
                 tags: ['api', 'Login'],
-                //pre: loginPre,
-                plugins: {
-                    'hapi-swagger': {
-                        responseMessages: [
-                            { code: 200, message: 'Success' },
-                            { code: 400, message: 'Bad Request' },
-                            { code: 404, message: 'Not Found' },
-                            { code: 500, message: 'Internal Server Error' }
-                        ]
-                    }
-                }
-            },
-        });
-
-        server.route({
-            method: 'GET',
-            path: '/login/facebook',
-            config: {
-                handler: function(request, reply){
-                    //facebook oauth logic here
-                    reply('success');
-                },
-                auth: null,
-                description: 'User login via facebook',
-                tags: ['api', 'Login'],
-                //pre: loginPre,
-                plugins: {
-                    'hapi-swagger': {
-                        responseMessages: [
-                            { code: 200, message: 'Success' },
-                            { code: 400, message: 'Bad Request' },
-                            { code: 404, message: 'Not Found' },
-                            { code: 500, message: 'Internal Server Error' }
-                        ]
-                    }
-                }
-            },
-        });
-
-        server.route({
-            method: 'GET',
-            path: '/login/github',
-            config: {
-                handler: function(request, reply){
-                    //github oauth logic here
-                    reply('success');
-                },
-                auth: null,
-                description: 'User login via github',
-                tags: ['api', 'Login'],
-                //pre: loginPre,
-                plugins: {
-                    'hapi-swagger': {
-                        responseMessages: [
-                            { code: 200, message: 'Success' },
-                            { code: 400, message: 'Bad Request' },
-                            { code: 404, message: 'Not Found' },
-                            { code: 500, message: 'Internal Server Error' }
-                        ]
-                    }
-                }
-            },
-        });
-
-        server.route({
-            method: 'GET',
-            path: '/login/twitter',
-            config: {
-                handler: function(request, reply){
-                    //twitter oauth logic here
-                    reply('success');
-                },
-                auth: null,
-                description: 'User login via twitter',
-                tags: ['api', 'Login'],
-                //pre: loginPre,
-                plugins: {
-                    'hapi-swagger': {
-                        responseMessages: [
-                            { code: 200, message: 'Success' },
-                            { code: 400, message: 'Bad Request' },
-                            { code: 404, message: 'Not Found' },
-                            { code: 500, message: 'Internal Server Error' }
-                        ]
-                    }
-                }
-            },
-        });
-
-        server.route({
-            method: 'GET',
-            path: '/login/instagram',
-            config: {
-                handler: function(request, reply){
-                    //instagram oauth logic here
-                    reply('success');
-                },
-                auth: null,
-                description: 'User login via instagram',
-                tags: ['api', 'Login'],
-                //pre: loginPre,
-                plugins: {
-                    'hapi-swagger': {
-                        responseMessages: [
-                            { code: 200, message: 'Success' },
-                            { code: 400, message: 'Bad Request' },
-                            { code: 404, message: 'Not Found' },
-                            { code: 500, message: 'Internal Server Error' }
-                        ]
-                    }
-                }
-            },
-        });
-
-        server.route({
-            method: 'GET',
-            path: '/login/linkedin',
-            config: {
-                handler: function(request, reply){
-                    //loinkedin oauth logic here
-                    reply('success');
-                },
-                auth: null,
-                description: 'User login via linkedin',
-                tags: ['api', 'Login'],
-                //pre: loginPre,
-                plugins: {
-                    'hapi-swagger': {
-                        responseMessages: [
-                            { code: 200, message: 'Success' },
-                            { code: 400, message: 'Bad Request' },
-                            { code: 404, message: 'Not Found' },
-                            { code: 500, message: 'Internal Server Error' }
-                        ]
-                    }
-                }
-            },
-        });
-
-        server.route({
-            method: 'GET',
-            path: '/login/dropbox',
-            config: {
-                handler: function(request, reply){
-                    //dropbox oauth logic here
-                    reply('success');
-                },
-                auth: null,
-                description: 'User login via dropbox',
-                tags: ['api', 'Login'],
-                //pre: loginPre,
-                plugins: {
-                    'hapi-swagger': {
-                        responseMessages: [
-                            { code: 200, message: 'Success' },
-                            { code: 400, message: 'Bad Request' },
-                            { code: 404, message: 'Not Found' },
-                            { code: 500, message: 'Internal Server Error' }
-                        ]
-                    }
-                }
+                pre: socialLoginPre,
+                plugins: {}
             },
         });
     }());
-
 
     // Forgot Password Endpoint
     (function() {
@@ -714,5 +683,92 @@ module.exports = function(server, mongoose, logger) {
                 }
             }
         });
+    }());
+
+    //SSO authentication
+    (function() {
+        //tmp config variables
+        let metadata_secrete = "qwertyuiop";
+        let sso_login_url = "https://idp.ssocircle.com:443/sso/SSORedirect/metaAlias/publicidp";
+        let sso_logout_url = "https://idp.ssocircle.com:443/sso/IDPSloRedirect/metaAlias/publicidp";
+        let certificates = [fs.readFileSync(__dirname + "/../../assets/sso.crt").toString()];
+        let private_key = fs.readFileSync(__dirname + "/../../assets/sso.pem").toString();
+
+        let sp_options = {
+            entity_id: `${clientURL}/login/sso/metadata.xml`,
+            private_key: private_key,
+            certificate: certificates,
+            assert_endpoint: `${clientURL}/login/sso/assert`,
+            allow_unencrypted_assertion: true
+        };
+        let idp_options = {
+            sso_login_url: sso_login_url,
+            sso_logout_url: sso_logout_url,
+            certificates: certificates,
+            allow_unencrypted_assertion: true
+        };
+        let sp = new saml2.ServiceProvider(sp_options);
+        let idp = new saml2.IdentityProvider(idp_options);
+
+        server.route({
+            method: 'GET',
+            path: `/login/sso/metadata.xml`,
+            config: {
+                handler: (request, reply) => {
+                    reply(sp.create_metadata()).type('application/xml');
+                },
+                auth: null,
+                description: 'SSO metadata xml',
+                tags: ['api', 'Login', 'SSO'],
+                plugins: {}
+            },
+        });
+
+        server.route({
+            method: 'GET',
+            path: `/login/sso`,
+            config: {
+                handler: (request, reply) => {
+                    sp.create_login_request_url(idp, {}, function(err, login_url, request_id) {
+                        if (err != null)
+                            reply(Boom.badImplementation("Internal server error!"));
+                        reply.redirect(login_url);
+                    });
+                },
+                auth: null,
+                description: 'SSO metadata xml',
+                tags: ['api', 'Login', 'SSO'],
+                //pre: loginPre,
+                plugins: {}
+            },
+        });
+
+        server.route({
+            method: 'post',
+            path: `/login/sso/assert`,
+            config: {
+                handler: (request, reply) => {
+                    var options = { request_body: request.payload };
+
+                    sp.post_assert(idp, options, function(err, saml_response) {
+                        if (err != null) {
+                            Log.error(err);
+                            return reply(Boom.badImplementation("Internal server error!"));
+                        }
+                        Log.note(saml_response);
+                        let name_id = saml_response.user.name_id;
+                        let session_index = saml_response.user.session_index;
+                        console.log({ "name_id": name_id, "session_index": session_index });
+                        return reply(`Hello ${saml_response.user.name_id}!`);
+                    });
+                },
+                auth: null,
+                description: 'SSO metadata xml',
+                tags: ['api', 'Login', 'SSO'],
+                // pre: [],
+                plugins: {}
+            },
+        });
+
     }());
 };

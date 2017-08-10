@@ -32,7 +32,7 @@ module.exports = function(server, mongoose, logger) {
             email: Joi.string().email().required(),
             role: Joi.array().items(Joi.string()).required(),
             password: Joi.string().required()
-        }
+        };
 
         server.route({
             method: 'post',
@@ -59,7 +59,7 @@ module.exports = function(server, mongoose, logger) {
                         ]
                     }
                 }
-            },
+            }
         });
     }());
 
@@ -110,7 +110,7 @@ module.exports = function(server, mongoose, logger) {
                         ]
                     }
                 }
-            },
+            }
         });
     }());
 
@@ -161,7 +161,7 @@ module.exports = function(server, mongoose, logger) {
                         ]
                     }
                 }
-            },
+            }
         });
 
         server.route({
@@ -189,7 +189,7 @@ module.exports = function(server, mongoose, logger) {
                         ]
                     }
                 }
-            },
+            }
         });
     }());
 };

@@ -16,7 +16,7 @@ module.exports = function(mongoose) {
         },
         lastName: {
             type: Types.String,
-            required: true
+            required: false
         },
         picture: {
             type: Types.String,
@@ -97,6 +97,10 @@ module.exports = function(mongoose) {
         role: {
             type: Types.ObjectId,
             ref: "role"
+        },
+        identities: {
+            type: Types.Mixed,
+            required: false
         },
         resetPassword: {
             token: {

@@ -16,6 +16,7 @@
     "chalk": "*",
     "confidence": "^3.0.2",
     "dotenv": "^2.0.0",
+    "fs": "0.0.1-security",
     "glue": "^4.1.0",
     "gulp": "^3.9.1",
     "gulp-exit": "0.0.2",
@@ -23,7 +24,9 @@
     "gulp-util": "latest",
     "handlebars": "^4.0.6",
     "hapi-auth-jwt2": "^7.2.4",
+    "hapi-passport": "0.0.6",
     "hoek": "^4.1.0",
+    "inert": "^4.2.1",
     "joi": "^9.2.0",
     "jsonwebtoken": "^7.1.9",
     "labbable": "^2.1.1",
@@ -34,7 +37,8 @@
     "nodemailer-markdown": "^1.0.1",
     "q": "^1.4.1",
     "require-dir": "~0.1.0",
-    "rest-hapi": "latest"
+    "rest-hapi": "latest",
+    "saml2-js": "^1.11.1"
   },
   "devDependencies": {
     "code": "^4.1.0",
