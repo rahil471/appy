@@ -39,6 +39,7 @@ const config = {
         local: 'easy',
         $default: 'medium'
     },
+    twoFA: true,
     loginWith: ['username'],
     constants: constants,
     expirationPeriod: {

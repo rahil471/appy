@@ -16,4 +16,4 @@ EXPOSE 8125
 
 #RUN gulp seed
 
-CMD ["npm", "start"]
+CMD ["gulp"]

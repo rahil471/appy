@@ -36,7 +36,6 @@ module.exports = function(server, mongoose, logger) {
                 assign: 'isValid',
                 method: function(request, reply){
                     const key = request.pre.primarykey; //key using which login is set
-                    console.log(key);
                     if(!request.payload[key]){
                         return reply(Boom.badRequest(`Application is configured to use ${key}, which is missing.`));
                     }
