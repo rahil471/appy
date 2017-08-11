@@ -701,89 +701,89 @@ module.exports = function(server, mongoose, logger) {
     }());
 
     //SSO authentication
-    (function() {
-        //tmp config variables
-        let metadata_secrete = "qwertyuiop";
-        let sso_login_url = "https://idp.ssocircle.com:443/sso/SSORedirect/metaAlias/publicidp";
-        let sso_logout_url = "https://idp.ssocircle.com:443/sso/IDPSloRedirect/metaAlias/publicidp";
-        let certificates = [fs.readFileSync(__dirname + "/../../assets/sso.crt").toString()];
-        let private_key = fs.readFileSync(__dirname + "/../../assets/sso.pem").toString();
+    // (function() {
+    //     //tmp config variables
+    //     let metadata_secrete = "qwertyuiop";
+    //     let sso_login_url = "https://idp.ssocircle.com:443/sso/SSORedirect/metaAlias/publicidp";
+    //     let sso_logout_url = "https://idp.ssocircle.com:443/sso/IDPSloRedirect/metaAlias/publicidp";
+    //     let certificates = [fs.readFileSync(__dirname + "/../../assets/sso.crt").toString()];
+    //     let private_key = fs.readFileSync(__dirname + "/../../assets/sso.pem").toString();
 
-        let sp_options = {
-            entity_id: `${clientURL}/login/sso/metadata.xml`,
-            private_key: private_key,
-            certificate: certificates,
-            assert_endpoint: `${clientURL}/login/sso/assert`,
-            allow_unencrypted_assertion: true
-        };
-        let idp_options = {
-            sso_login_url: sso_login_url,
-            sso_logout_url: sso_logout_url,
-            certificates: certificates,
-            allow_unencrypted_assertion: true
-        };
-        let sp = new saml2.ServiceProvider(sp_options);
-        let idp = new saml2.IdentityProvider(idp_options);
+    //     let sp_options = {
+    //         entity_id: `${clientURL}/login/sso/metadata.xml`,
+    //         private_key: private_key,
+    //         certificate: certificates,
+    //         assert_endpoint: `${clientURL}/login/sso/assert`,
+    //         allow_unencrypted_assertion: true
+    //     };
+    //     let idp_options = {
+    //         sso_login_url: sso_login_url,
+    //         sso_logout_url: sso_logout_url,
+    //         certificates: certificates,
+    //         allow_unencrypted_assertion: true
+    //     };
+    //     let sp = new saml2.ServiceProvider(sp_options);
+    //     let idp = new saml2.IdentityProvider(idp_options);
 
-        server.route({
-            method: 'GET',
-            path: `/login/sso/metadata.xml`,
-            config: {
-                handler: (request, reply) => {
-                    reply(sp.create_metadata()).type('application/xml');
-                },
-                auth: null,
-                description: 'SSO metadata xml',
-                tags: ['api', 'Login', 'SSO'],
-                plugins: {}
-            },
-        });
+    //     server.route({
+    //         method: 'GET',
+    //         path: `/login/sso/metadata.xml`,
+    //         config: {
+    //             handler: (request, reply) => {
+    //                 reply(sp.create_metadata()).type('application/xml');
+    //             },
+    //             auth: null,
+    //             description: 'SSO metadata xml',
+    //             tags: ['api', 'Login', 'SSO'],
+    //             plugins: {}
+    //         },
+    //     });
 
-        server.route({
-            method: 'GET',
-            path: `/login/sso`,
-            config: {
-                handler: (request, reply) => {
-                    sp.create_login_request_url(idp, {}, function(err, login_url, request_id) {
-                        if (err != null)
-                            reply(Boom.badImplementation("Internal server error!"));
-                        reply.redirect(login_url);
-                    });
-                },
-                auth: null,
-                description: 'SSO metadata xml',
-                tags: ['api', 'Login', 'SSO'],
-                //pre: loginPre,
-                plugins: {}
-            },
-        });
+    //     server.route({
+    //         method: 'GET',
+    //         path: `/login/sso`,
+    //         config: {
+    //             handler: (request, reply) => {
+    //                 sp.create_login_request_url(idp, {}, function(err, login_url, request_id) {
+    //                     if (err != null)
+    //                         reply(Boom.badImplementation("Internal server error!"));
+    //                     reply.redirect(login_url);
+    //                 });
+    //             },
+    //             auth: null,
+    //             description: 'SSO metadata xml',
+    //             tags: ['api', 'Login', 'SSO'],
+    //             //pre: loginPre,
+    //             plugins: {}
+    //         },
+    //     });
 
-        server.route({
-            method: 'post',
-            path: `/login/sso/assert`,
-            config: {
-                handler: (request, reply) => {
-                    var options = { request_body: request.payload };
+    //     server.route({
+    //         method: 'post',
+    //         path: `/login/sso/assert`,
+    //         config: {
+    //             handler: (request, reply) => {
+    //                 var options = { request_body: request.payload };
 
-                    sp.post_assert(idp, options, function(err, saml_response) {
-                        if (err != null) {
-                            Log.error(err);
-                            return reply(Boom.badImplementation("Internal server error!"));
-                        }
-                        Log.note(saml_response);
-                        let name_id = saml_response.user.name_id;
-                        let session_index = saml_response.user.session_index;
-                        console.log({ "name_id": name_id, "session_index": session_index });
-                        return reply(`Hello ${saml_response.user.name_id}!`);
-                    });
-                },
-                auth: null,
-                description: 'SSO metadata xml',
-                tags: ['api', 'Login', 'SSO'],
-                // pre: [],
-                plugins: {}
-            },
-        });
+    //                 sp.post_assert(idp, options, function(err, saml_response) {
+    //                     if (err != null) {
+    //                         Log.error(err);
+    //                         return reply(Boom.badImplementation("Internal server error!"));
+    //                     }
+    //                     Log.note(saml_response);
+    //                     let name_id = saml_response.user.name_id;
+    //                     let session_index = saml_response.user.session_index;
+    //                     console.log({ "name_id": name_id, "session_index": session_index });
+    //                     return reply(`Hello ${saml_response.user.name_id}!`);
+    //                 });
+    //             },
+    //             auth: null,
+    //             description: 'SSO metadata xml',
+    //             tags: ['api', 'Login', 'SSO'],
+    //             // pre: [],
+    //             plugins: {}
+    //         },
+    //     });
 
-    }());
+    // }());
 };

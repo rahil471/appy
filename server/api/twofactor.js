@@ -23,12 +23,14 @@ module.exports = function(server, mongoose, logger) {
         Log.note("Two factor");
 
         const twofactorsetupHandler = function(request, reply) {
+            const credentials = request.auth.credentials;
+            console.log(credentials);
             const strategy = request.params.strategy;
             switch(strategy){
                 case 'sms':
                 break;
                 case 'email':
-                break;
+                break; 
                 case 'google':
                 break;
                 default:
