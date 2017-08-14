@@ -43,9 +43,11 @@
     "passport-linkedin": "^1.0.0",
     "passport-twitter": "^1.0.4",
     "q": "^1.4.1",
+    "qrcode": "^0.9.0",
     "require-dir": "~0.1.0",
     "rest-hapi": "latest",
-    "saml2-js": "^1.11.1"
+    "saml2-js": "^1.11.1",
+    "speakeasy": "^2.0.0"
   },
   "devDependencies": {
     "code": "^4.1.0",
