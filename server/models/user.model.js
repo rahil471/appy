@@ -116,6 +116,10 @@ module.exports = function(mongoose) {
                 type: Types.Date
             }
         },
+        twofactor: {
+            type: Types.Mixed,
+            exclude: true
+        },
         activateAccount: {
             token: {
                 allowOnCreate: false,
