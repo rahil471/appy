@@ -130,8 +130,8 @@ const config = {
             }
         },
         cors: {
-            additionalHeaders: ['X-Total-Count', 'X-Auth-Header', 'X-Refresh-Token', 'scope'],
-            additionalExposedHeaders: ['X-Total-Count', 'X-Auth-Header', 'X-Refresh-Token', 'scope']
+            additionalHeaders: ['X-Total-Count', 'X-Auth-Header', 'X-Refresh-Token', 'scope', 'x-otp'],
+            additionalExposedHeaders: ['X-Total-Count', 'X-Auth-Header', 'X-Refresh-Token', 'scope', 'x-otp']
         },
         absoluteModelPath: true,
         modelPath: __dirname + '/server/models',

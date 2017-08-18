@@ -78,13 +78,10 @@ module.exports = function(server, mongoose, logger) {
             let user = request.pre.user;
             const strategy = request.params.strategy;
             switch(strategy){
-                case 'sms':
-                    if(!user.phone_number){
-                        return reply(Boom.notAcceptable("SMS strategy requires user to setup his Phone number"));
-                    }
+                case 'standard':
                     user.twofactor.strategy = strategy;
                     user.twofactor.enabled = true;
-                    user.twofactor.sms = {
+                    user.twofactor.standard = {
                         otp: "",
                         validtill: ""
                     };
@@ -99,37 +96,19 @@ module.exports = function(server, mongoose, logger) {
                         return reply(Boom.internal('Error setting up Two-factor.'));
                     });
                 break;
-                case 'email':
-                    user.twofactor.strategy = strategy;
-                    user.twofactor.enabled = true;
-                    user.twofactor.email = {
-                        otp: "",
-                        validtill: ""
-                    };
-                    user.save().then((result) => {
-                        return reply({
-                            message: 'success',
-                            error: 0,
-                            setup: user.twofactor
-                        });
-                    })
-                    .catch(err => {
-                        return reply(Boom.internal('Error setting up Two-factor.'));
-                    });
-                break;
-                case 'google':
-                    Log.note('Entering google startegy');
+                case 'totp':
+                    Log.note('Entering totp startegy');
                     var secret = speakeasy.generateSecret({length:10});
                     user.twofactor.strategy = strategy;
                     user.twofactor.enabled = false;
-                    user.twofactor.google = {
+                    user.twofactor.totp = {
                         secret: "",
                         tempSecret: secret.base32,
                         otpauthUrl: secret.otpauth_url,
                         dataUrl: ""
                     }
                     QRCode.toDataURL(secret.otpauth_url, (err, data_url)=>{
-                        user.twofactor.google.dataUrl = data_url;
+                        user.twofactor.totp.dataUrl = data_url;
                         user.save().then((result) => {
                             return reply({
                                 message: 'Two-factor setup initiated, please confirm with validation.',
@@ -158,7 +137,7 @@ module.exports = function(server, mongoose, logger) {
                 validate: {
                     headers: headersValidation,
                     params: {
-                        strategy: Joi.string().required().valid('sms', 'email', 'google')
+                        strategy: Joi.string().required().valid('standard', 'totp')
                     },
                     payload: {
                         overwrite: Joi.boolean()
@@ -208,7 +187,7 @@ module.exports = function(server, mongoose, logger) {
                 assign: 'isAllowed',
                 method: function(request, reply){
                     const user = request.pre.user;
-                    if(user.twofactor && user.twofactor.strategy === 'google'){
+                    if(user.twofactor && user.twofactor.strategy === 'totp'){
                         return reply(true);
                     } else {
                         return reply(Boom.notAcceptable('Two-factor setup is not initiated for this user.'));
@@ -219,7 +198,7 @@ module.exports = function(server, mongoose, logger) {
                 assign: 'verify',
                 method: function(request, reply){
                     const user = request.pre.user;
-                    const secret = user.twofactor.google.tempSecret;
+                    const secret = user.twofactor.totp.tempSecret;
                     const otp = request.payload.otp;
                     const verified = speakeasy.totp.verify({ secret: secret,
                                                              encoding: 'base32',
@@ -239,11 +218,10 @@ module.exports = function(server, mongoose, logger) {
         const handler = function(request, reply) {
             const isVerified = request.pre.verify;
             let user = request.pre.user;
-            console.log(isVerified);
             if(!isVerified){
                 return reply(Boom.notAcceptable('Invalid OTP, verification failed.'));
             }
-            user.twofactor.google.secret = user.twofactor.google.tempSecret;
+            user.twofactor.totp.secret = user.twofactor.totp.tempSecret;
             user.twofactor.enabled = true;
             user.markModified('twofactor');
             user.save().then((result) => {
@@ -255,11 +233,11 @@ module.exports = function(server, mongoose, logger) {
         };
         server.route({
             method: 'post',
-            path: '/twofactor/setup/google/confirm',
+            path: '/twofactor/setup/totp/confirm',
             config: {
                 handler: handler,
                 auth: authStrategy,
-                description: 'Confirm and enable Two-factor authentication using google authenticator',
+                description: 'Confirm and enable Two-factor authentication using totp authenticator',
                 tags: ['api', 'twofactor'],
                 pre: pre,
                 validate: {

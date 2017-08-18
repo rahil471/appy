@@ -10,6 +10,7 @@ const _ = require("underscore");
 
 const Config = require('../../config');
 const Token = require('../token');
+const Twofactor = require('../utils/twofactor');
 
 const USER_ROLES = Config.get('/constants/USER_ROLES');
 const AUTH_STRATEGIES = Config.get('/constants/AUTH_STRATEGIES');
@@ -155,6 +156,39 @@ module.exports = function(server, mongoose, logger) {
                 }
             },
             {
+                assign: 'twofactor',
+                method: function(request, reply){
+                    if(request.pre.user.twofactor && request.pre.user.twofactor.enabled === true){
+                        if(request.headers["x-otp"]){
+                            return reply(true);
+                        } else {
+                            //set otp for standard implementation
+                            return reply({twofactor: true, message: "Please enter otp to continue."}).code(203).takeover();
+                        }
+                    } else {
+                        reply(false);
+                    }
+                }
+            },
+            {
+                assign: 'validateOtp',
+                method: function(request, reply){
+                    if(!request.pre.twofactor){
+                        //EXPL: If 2fa not enabled, pass.
+                        return reply();
+                    }
+                    const user  = request.pre.user;
+                    const strategy = user.twofactor.strategy;
+                    const otp = request.headers["x-otp"];
+                    const verfied = Twofactor.verifyOtp(user, strategy, otp, Log);
+                    if(verfied){
+                        reply(true);
+                    } else {
+                        reply(Boom.badRequest("Invalid OTP."))
+                    }
+                }
+            },
+            {
                 assign: 'standardToken',
                 method: function(request, reply) {
                     switch (authStrategy) {
@@ -209,6 +243,9 @@ module.exports = function(server, mongoose, logger) {
                 }
             }
         ];
+        const headersValidation = Joi.object({
+            'x-otp': Joi.number()
+        }).options({ allowUnknown: true });
 
         const loginHandler = function(request, reply) {
 
@@ -216,6 +253,7 @@ module.exports = function(server, mongoose, logger) {
             let response = {};
 
             request.pre.user.password = "";
+            delete request.pre.user.twofactor;
 
             switch (authStrategy) {
                 case AUTH_STRATEGIES.TOKEN:
@@ -264,7 +302,8 @@ module.exports = function(server, mongoose, logger) {
                         phonenumber: Joi.string(),
                         email: Joi.string().email().lowercase(),
                         password: Joi.string().required()
-                    }
+                    },
+                    headers: headersValidation
                 },
                 pre: loginPre,
                 plugins: {

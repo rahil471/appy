@@ -117,8 +117,42 @@ module.exports = function(mongoose) {
             }
         },
         twofactor: {
-            type: Types.Mixed,
-            exclude: true
+            strategy: {
+                type: Types.String,
+                exclude: true,
+            },
+            totp: {
+                tempSecret:{
+                    type: Types.String,
+                    exclude: true,
+                },
+                secret:{
+                    type: Types.String,
+                    exclude: true,
+                },
+                dataUrl:{
+                    type: Types.String,
+                    exclude: true,
+                },
+                otpauthUrl:{
+                    type: Types.String,
+                    exclude: true,
+                }
+            },
+            enabled: {
+                type: Types.Boolean,
+                exclude: true,
+            },
+            standard: {
+                otp: {
+                    type: Types.String,
+                    exclude: true,
+                },
+                otpExp: {
+                    type: Types.String,
+                    exclude: true,
+                }
+            }
         },
         activateAccount: {
             token: {
