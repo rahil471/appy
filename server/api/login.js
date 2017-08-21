@@ -158,12 +158,39 @@ module.exports = function(server, mongoose, logger) {
             {
                 assign: 'twofactor',
                 method: function(request, reply){
+                    const isAllowed = Config.get('/twoFA');
+                    if(!isAllowed){
+                        return reply(false);
+                    }
+                    let user = request.pre.user;
                     if(request.pre.user.twofactor && request.pre.user.twofactor.enabled === true){
                         if(request.headers["x-otp"]){
-                            return reply(true);
+                            return reply(user.twofactor.strategy);
                         } else {
                             //set otp for standard implementation
-                            return reply({twofactor: true, message: "Please enter otp to continue."}).code(203).takeover();
+                            switch (user.twofactor.strategy){
+                                case 'standard':
+                                    //generate otp
+                                    //save otp
+                                    //send otp
+                                    const key = request.pre.primarykey
+                                    const value = request.payload[key];
+                                    User.setOtp(key, value, Log)
+                                    .then((result)=> { 
+                                        return Twofactor.sendOtp(user.email, user.phone_number, result.otp, result.otpExp, Log);
+                                    })
+                                    .then(()=>{
+                                        return reply({twofactor: true, message: `An OTP is sent to ${user.email} & ${user.phone_number}`}).code(203).takeover();
+                                    })
+                                    .catch((err)=>{
+                                        Log.error(err);
+                                        return reply(Boom.internal(err));
+                                    });
+                                break;
+                                case 'totp':
+                                    return reply({twofactor: true, message: "Please enter otp to continue."}).code(203).takeover();
+                                break;
+                            }
                         }
                     } else {
                         reply(false);
@@ -173,8 +200,8 @@ module.exports = function(server, mongoose, logger) {
             {
                 assign: 'validateOtp',
                 method: function(request, reply){
+                    //EXPL: If 2fa not enabled, pass.
                     if(!request.pre.twofactor){
-                        //EXPL: If 2fa not enabled, pass.
                         return reply();
                     }
                     const user  = request.pre.user;
@@ -185,6 +212,32 @@ module.exports = function(server, mongoose, logger) {
                         reply(true);
                     } else {
                         reply(Boom.badRequest("Invalid OTP."))
+                    }
+                }
+            },
+            {
+                assign: 'invalidateOtp',
+                method: function(request, reply){
+                    //EXPL: If 2fa not enabled, pass.
+                    if(!request.pre.twofactor){
+                        return reply();
+                    }
+                    const conditions = {
+                        verified: request.pre.vaidateOtp,
+                        strategy: request.pre.twofactor
+                    }
+                    if(!!conditions.strategy && conditions.strategy === 'standard'){
+                        const key = request.pre.primarykey;
+                        const value = request.payload[key];
+                        User.unSetOtp(key, value, Log).then(()=>{
+                            return reply(true);
+                        })
+                        .catch((err)=>{
+                            Log.error(err);
+                            return reply(Boom.internal(err));
+                        });
+                    } else {
+                        reply();
                     }
                 }
             },

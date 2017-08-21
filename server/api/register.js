@@ -58,7 +58,6 @@ module.exports = function(server, mongoose, logger) {
                         conditions.push({[key] : request.payload.user[key]});
                     }
                 }
-                console.log(conditions);
                 User.findOne({$or: conditions})
                     .then(function(user) {
                         console.log(request.payload.user.username);

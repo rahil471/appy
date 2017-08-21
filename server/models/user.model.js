@@ -300,6 +300,48 @@ module.exports = function(mongoose) {
                 });
         },
 
+        setOtp: function(key, value, Log){
+            const otp = Math.floor(Math.random()*90000) + 10000;
+            const otpExp = Date.now() + (30 * 60 * 1000);
+            const query = {
+                [key]: value
+            };
+            const update = {
+                $set : {
+                    'twofactor.standard': { 
+                        otp: otp, 
+                        otpExp: otpExp
+                    }
+                }
+            };
+            return this.update(query, update).then((result)=>{
+                result.otp = otp;
+                result.otpExp = otpExp;
+                return result;
+            });
+        },
+
+        unSetOtp: function(key, value, Log){
+            const otp = "";
+            const otpExp = "";
+            const query = {
+                [key]: value
+            };
+            const update = {
+                $set : {
+                    'twofactor.standard': { 
+                        otp: otp, 
+                        otpExp: otpExp
+                    }
+                }
+            };
+            return this.update(query, update).then((result)=>{
+                result.otp = otp;
+                result.otpExp = otpExp;
+                return result;
+            });
+        },
+
         findByGivenKey: function(key, value, password, Log){
             const query = {
                 [key] : value

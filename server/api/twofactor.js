@@ -15,7 +15,6 @@ module.exports = function(server, mongoose, logger) {
     // Access
     (function() {
         const Log = logger.bind(Chalk.magenta("Two-factor"));
-        const Session = mongoose.model('session');
         const User = mongoose.model('user');
 
         //prerequisite for API
@@ -158,14 +157,23 @@ module.exports = function(server, mongoose, logger) {
     }());
 
 
-    // Access
+    // Confirm totp two-factor
     (function() {
         const Log = logger.bind(Chalk.magenta("Two-factor"));
-        const Session = mongoose.model('session');
         const User = mongoose.model('user');
 
         //prerequisite for API
         const pre = [
+            {
+                assign: 'isAllowed',
+                method: function(request, reply){
+                    const isAllowed = Config.get('/twoFA');
+                    if(!isAllowed){
+                        return reply(Boom.notFound('Not found'));
+                    }
+                    return reply(isAllowed);
+                }
+            },
             {
                 assign: 'user',
                 method: function(request, reply){
@@ -184,7 +192,7 @@ module.exports = function(server, mongoose, logger) {
                 }
             },
             {
-                assign: 'isAllowed',
+                assign: 'isInitiated',
                 method: function(request, reply){
                     const user = request.pre.user;
                     if(user.twofactor && user.twofactor.strategy === 'totp'){
@@ -245,6 +253,161 @@ module.exports = function(server, mongoose, logger) {
                     payload: {
                         otp: Joi.number().required()
                     }
+                },
+                plugins: {
+                    'hapi-swagger': {
+                        responseMessages: [
+                            { code: 200, message: 'Success' },
+                            { code: 400, message: 'Bad Request' },
+                            { code: 404, message: 'Not Found' },
+                            { code: 500, message: 'Internal Server Error' }
+                        ]
+                    }
+                }
+            }
+        });
+    }());
+
+
+    // Disable two-factor for user
+    (function() {
+        const Log = logger.bind(Chalk.magenta("Two-factor"));
+        const User = mongoose.model('user');
+
+        //prerequisite for API
+        const pre = [
+            {
+                assign: 'isAllowed',
+                method: function(request, reply){
+                    Log.note('isAllowed');
+                    const isAllowed = Config.get('/twoFA');
+                    if(!isAllowed){
+                        return reply(Boom.notFound('Not found'));
+                    }
+                    return reply(isAllowed);
+                }
+            },
+            {
+                assign: 'user',
+                method: function(request, reply){
+                    Log.note('user');
+                    const condition = {
+                        email: request.auth.credentials.user.email
+                    };
+                    User.findOne(condition).then((user)=>{
+                        if(!user){
+                            return reply(Boom.notFound("User Does not exist."));
+                        }
+                        return reply(user);
+                    }).catch((err)=>{
+                        return reply(Boom.badImplementation());
+                    });
+                }
+            }
+        ];
+
+        const headersValidation = Joi.object({
+            'authorization': Joi.string().required()
+        }).options({ allowUnknown: true });
+
+        Log.note("Two factor disable");
+
+        const handler = function(request, reply) {
+            let user = request.pre.user;
+            user.twofactor = {};
+            user.save().then((result) => {
+                return reply('success');
+            })
+            .catch(err => {
+                Log.error(err);
+                return reply(Boom.internal('Error disabling Two-factor Authentication.'));
+            });
+        };
+        server.route({
+            method: 'delete',
+            path: '/twofactor/setup',
+            config: {
+                handler: handler,
+                auth: authStrategy,
+                description: 'Turn-off two factor authentication',
+                tags: ['api', 'twofactor'],
+                pre: pre,
+                validate: {
+                    headers: headersValidation
+                },
+                plugins: {
+                    'hapi-swagger': {
+                        responseMessages: [
+                            { code: 200, message: 'Success' },
+                            { code: 400, message: 'Bad Request' },
+                            { code: 404, message: 'Not Found' },
+                            { code: 500, message: 'Internal Server Error' }
+                        ]
+                    }
+                }
+            }
+        });
+    }());
+
+    // Get two-factor setup details
+    (function() {
+        const Log = logger.bind(Chalk.magenta("Two-factor"));
+        const User = mongoose.model('user');
+
+        //prerequisite for API
+        const pre = [
+            {
+                assign: 'isAllowed',
+                method: function(request, reply){
+                    Log.note('isAllowed');
+                    const isAllowed = Config.get('/twoFA');
+                    if(!isAllowed){
+                        return reply(Boom.notFound('Not found'));
+                    }
+                    return reply(isAllowed);
+                }
+            },
+            {
+                assign: 'user',
+                method: function(request, reply){
+                    Log.note('user');
+                    const condition = {
+                        email: request.auth.credentials.user.email
+                    };
+                    User.findOne(condition).then((user)=>{
+                        if(!user){
+                            return reply(Boom.notFound("User Does not exist."));
+                        }
+                        return reply(user);
+                    }).catch((err)=>{
+                        return reply(Boom.badImplementation());
+                    });
+                }
+            }
+        ];
+
+        const headersValidation = Joi.object({
+            'authorization': Joi.string().required()
+        }).options({ allowUnknown: true });
+
+        Log.note("Two factor disable");
+
+        const handler = function(request, reply) {
+            const user = request.pre.user;
+            const twofactor = request.pre.user.twofactor || {};
+            reply(twofactor);
+        };
+        server.route({
+            method: 'get',
+            path: '/twofactor/setup',
+            config: {
+                handler: handler,
+                auth: authStrategy,
+                description: 'Get two factor setup details',
+                tags: ['api', 'twofactor'],
+                pre: pre,
+                validate: {
+                    headers: headersValidation
                 },
                 plugins: {
                     'hapi-swagger': {
