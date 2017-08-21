@@ -71,11 +71,9 @@ class UserOperations {
      * @param {instance} Log - log instance 
      */
     updateSocial(user, userdata, Log) {
-        user.identities["github"] = { "id": userdata.id };
 
         user.firstName = user.firstName ? user.firstName : userdata.firstName;
         user.lastName = user.lastName ? user.lastName : userdata.lastName;
-        user.email = user.email ? user.email : userdata.email;
         user.username = user.username ? user.username : userdata.email;
         user.photo = user.photo ? user.photo : userdata.photo;
         user.identities = user.identities || {};
