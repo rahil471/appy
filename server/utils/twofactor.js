@@ -5,6 +5,14 @@ module.exports.generateOtp = function(Log){
 
 }
 
+/**
+ * @function sendOtp
+ * @param {string} email - Email to send the email
+ * @param {string} phoneno - Send sms
+ * @param {string} otp - otp to be sent
+ * @param {string} expiry - validaity of otp
+ * @param {object} Log - Log object
+ */
 module.exports.sendOtp = function(email, phoneno, otp, expiry, Log){
     Log.note(otp);
     return new Promise((resolve, reject)=>{
@@ -15,6 +23,13 @@ module.exports.sendOtp = function(email, phoneno, otp, expiry, Log){
     });
 }
 
+/**
+ * @function verifyOtp
+ * @param {object} user - User object
+ * @param {string} strategy - 2fa strategy
+ * @param {string} otp - otp to be verified
+ * @param {object} Log - Log object
+ */
 module.exports.verifyOtp = function(user, strategy, otp, Log){
     let verified = false;
     switch(strategy){
