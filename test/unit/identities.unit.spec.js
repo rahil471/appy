@@ -19,7 +19,7 @@ const expect = Code.expect;
 //const User = mongoose.model('user',userschema);
 
 //const usertests = require('./unit.spec');
-describe('Functional Tests - Identities |', () => {
+describe('Unit Tests - Identities |', () => {
     let server;
     let User;
     let useroperations;
@@ -46,7 +46,6 @@ describe('Functional Tests - Identities |', () => {
     it("should find social login app credentials!", (done) => {
         let provider = "google";
         useroperations.getSocialLoginAppCredentials(provider).then((result) => {
-            console.log(result);
             expect(result).to.be.an.object();
             if (Object.keys(result).length) {
                 expect(result.name).to.be.equal(provider);

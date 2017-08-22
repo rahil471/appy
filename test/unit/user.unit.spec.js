@@ -19,7 +19,7 @@ const expect      = Code.expect;
 //const User = mongoose.model('user',userschema);
 
 //const usertests = require('./unit.spec');
-describe('Functional Tests - User', ()=>{
+describe('Unit Tests - User', ()=>{
     let server;
     let User;
     before((done)=>{
@@ -40,7 +40,7 @@ describe('Functional Tests - User', ()=>{
     });
 
     it("should find users by credentials", (done)=>{
-        let email = "user@gmail.com";
+        let email = "manager@gmail.com";
         User.findByCredentials(email, "root").then((result)=>{
             expect(result.email).to.be.equal(email)
             done();
