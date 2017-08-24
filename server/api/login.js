@@ -387,11 +387,13 @@ module.exports = function(server, mongoose, logger) {
 
             return socialStrategy({
                 onSuccess: function(info, request, reply) {
-                    return reply.redirect(`${request.pre.social.successUrl}?status=200&authHeader=${info.authHeader}&refreshToken=${info.refreshToken}`);
+                    let successUrl = request.pre.social.successUrl ? request.pre.social.successUrl : defaultSuccessUrl;
+                    return reply.redirect(`${successUrl}?status=200&authHeader=${info.authHeader}&refreshToken=${info.refreshToken}`);
                 },
                 onError: function(error, request, reply) {
                     Log.error(error);
-                    return reply.redirect(`${request.pre.social.successUrl}?error=${error}`);
+                    let errorUrl = request.pre.social.errorUrl ? request.pre.social.errorUrl : defaultErrorUrl;
+                    return reply.redirect(`${errorUrl}?error=${error}`);
                 }
             })(request, reply);
 
@@ -703,104 +705,133 @@ module.exports = function(server, mongoose, logger) {
     //SSO authentication
     (function() {
         const Log = logger.bind(Chalk.magenta("SSO"));
-        //tmp config variables
-        let metadata_secrete = "qwertyuiop";
-        let sso_login_url = "https://idp.ssocircle.com:443/sso/SSORedirect/metaAlias/publicidp";
-        let sso_logout_url = "https://idp.ssocircle.com:443/sso/IDPSloRedirect/metaAlias/publicidp";
-        let certificates = [fs.readFileSync(__dirname + "/../../assets/sso.crt").toString()];
-        let private_key = fs.readFileSync(__dirname + "/../../assets/sso.pem").toString();
         const userOperations = new UserOperations();
 
-        let sp_options = {
-            entity_id: `${clientURL}/login/sso/metadata.xml`,
-            private_key: private_key,
-            certificate: certificates,
-            assert_endpoint: `${clientURL}/login/sso/assert`,
-            allow_unencrypted_assertion: true
-        };
-        let idp_options = {
-            sso_login_url: sso_login_url,
-            sso_logout_url: sso_logout_url,
-            certificates: certificates,
-            allow_unencrypted_assertion: true
-        };
-        let sp = new saml2.ServiceProvider(sp_options);
-        let idp = new saml2.IdentityProvider(idp_options);
+        /**
+         * checks for provider settings are present in database or not! 
+         * @function 
+         */
+        const samlLoginPre = [{
+            assign: 'saml',
+            method: (request, reply) => {
+                userOperations.getSamlLoginAppCredentials(request.params.provider, Log)
+                    .then(result => {
+                        if (result) {
+                            return reply(result);
+                        } else {
+                            reply(Boom.notFound("Not Found"));
+                        }
+                    })
+                    .catch(error => Boom.gatewayTimeout('An error occurred.'));
+            }
+        }];
 
         server.route({
             method: 'GET',
-            path: `/login/sso/metadata.xml`,
+            path: `/login/sso/{provider}/metadata.xml`,
             config: {
                 handler: (request, reply) => {
-                    reply(sp.create_metadata()).type('application/xml');
+                    userOperations.initProvider('sp', request.pre.saml, clientURL)
+                        .then(sp => {
+                            reply(sp.create_metadata()).type('application/xml');
+                        })
+                        .catch(error => {
+                            Log.error(error);
+                            reply(Boom.badImplementation("Internal server error!"));
+                        });
                 },
                 auth: null,
                 description: 'SSO metadata xml',
                 tags: ['api', 'Login', 'SSO'],
+                pre: samlLoginPre,
                 plugins: {}
             },
         });
 
+
         server.route({
             method: 'GET',
-            path: `/login/sso`,
+            path: `/login/sso/{provider}`,
             config: {
                 handler: (request, reply) => {
-                    sp.create_login_request_url(idp, {}, function(err, login_url, request_id) {
-                        if (err != null)
+                    let sp, idp;
+                    userOperations.initProvider('sp', request.pre.saml, clientURL)
+                        .then(result => {
+                            sp = result;
+                            return;
+                        })
+                        .then(_ => userOperations.initProvider('idp', request.pre.saml, clientURL))
+                        .then(result => {
+                            idp = result;
+                            return;
+                        })
+                        .then(_ => new Promise((resolve, reject) => {
+                            sp.create_login_request_url(idp, {}, (err, login_url, request_id) => {
+                                if (err != null)
+                                    return reject();
+                                reply.redirect(login_url);
+                            });
+                        }))
+                        .catch(error => {
+                            Log.error(error);
                             reply(Boom.badImplementation("Internal server error!"));
-                        reply.redirect(login_url);
-                    });
+                        });
                 },
                 auth: null,
                 description: 'SSO metadata xml',
                 tags: ['api', 'Login', 'SSO'],
-                //pre: loginPre,
+                pre: samlLoginPre,
                 plugins: {}
             },
         });
 
         server.route({
             method: 'post',
-            path: `/login/sso/assert`,
+            path: `/login/sso/{provider}/assert`,
             config: {
                 handler: (request, reply) => {
-                    var mapping = {
-                        "email": "user.attributes.EmailAddress[0]",
-                        "id": "response_header.id",
-                        "firstName": "user.attributes.FirstName[0]",
-                        "lastName": "user.attributes.LastName[0]",
-                        "provider": "SSOCircle"
-                    }
                     var options = { request_body: request.payload };
-
-                    sp.post_assert(idp, options, function(err, saml_response) {
-                        if (err != null) {
-                            Log.error(err);
-                            return reply(Boom.badImplementation("Internal server error!"));
-                        }
-                        var userdata = {
-                            "email": eval(`saml_response.${mapping.email}`),
-                            "id": eval(`saml_response.${mapping.id}`),
-                            "firstName": eval(`saml_response.${mapping.firstName}`),
-                            "lastName": eval(`saml_response.${mapping.lastName}`),
-                            "provider": mapping.provider
-                        };
-
-                        userOperations.processSocialLogin(userdata, Log)
-                            .then(finaldata => {
-
-                                return reply.redirect(`${defaultSuccessUrl}?status=200&authHeader=${finaldata.authHeader}&refreshToken=${finaldata.refreshToken}`);
-                            })
-                            .catch(error => {
-                                return reply.redirect(`${defaultErrorUrl}?error=${error}`);
+                    var sp, idp;
+                    userOperations.initProvider('sp', request.pre.saml, clientURL)
+                        .then(result => {
+                            sp = result;
+                            return;
+                        })
+                        .then(_ => userOperations.initProvider('idp', request.pre.saml, clientURL))
+                        .then(result => {
+                            idp = result;
+                            return;
+                        })
+                        .then(_ => new Promise((resolve, reject) => {
+                            sp.post_assert(idp, options, (error, saml_response) => {
+                                if (error)
+                                    return reject();
+                                var mapping = request.pre.saml.sso_response_mapping;
+                                var userdata = {
+                                    "email": eval(`saml_response.${mapping.email}`),
+                                    "id": eval(`saml_response.${mapping.id}`),
+                                    "firstName": eval(`saml_response.${mapping.firstName}`),
+                                    "lastName": eval(`saml_response.${mapping.lastName}`),
+                                    "provider": mapping.provider
+                                };
+                                return resolve(userdata);
                             });
-                    });
+                        }))
+                        .then(userdata => userOperations.processSocialLogin(userdata, Log))
+                        .then(finaldata => {
+                            let successUrl = request.pre.saml.successUrl ? request.pre.saml.successUrl : defaultSuccessUrl;
+                            return reply.redirect(`${successUrl}?status=200&authHeader=${finaldata.authHeader}&refreshToken=${finaldata.refreshToken}`);
+                        })
+                        .catch(error => {
+                            Log.error(error);
+                            let errorUrl = request.pre.saml.errorUrl ? request.pre.saml.errorUrl : defaultErrorUrl;
+                            return reply.redirect(`${errorUrl}?error=${error}`);
+                        });
                 },
                 auth: null,
                 description: 'SSO metadata xml',
                 tags: ['api', 'Login', 'SSO'],
-                // pre: [],
+                pre: samlLoginPre,
                 plugins: {}
             },
         });
