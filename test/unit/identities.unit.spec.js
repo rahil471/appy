@@ -46,6 +46,7 @@ describe('Unit Tests - Identities |', () => {
     it("should find social login app credentials!", (done) => {
         let provider = "google";
         useroperations.getSocialLoginAppCredentials(provider).then((result) => {
+            result = (result === null ? {} : result);
             expect(result).to.be.an.object();
             if (Object.keys(result).length) {
                 expect(result.name).to.be.equal(provider);

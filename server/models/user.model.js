@@ -74,7 +74,7 @@ module.exports = function(mongoose) {
             required: false
         },
         user_metadata: {
-            type: Types.Mixed,
+            type: Types.Object,
             required: false
         },
         isActive: {
@@ -344,23 +344,23 @@ module.exports = function(mongoose) {
 
         findByGivenKey: function(key, value, password, Log){
             const query = {
-                [key] : value
+                [key]: value
             }
             let user = {};
-            return this.findOne(query).lean().then((result)=>{
-                user = result;
-                if(!user){
-                    return false;
-                }
+            return this.findOne(query).lean().then((result) => {
+                    user = result;
+                    if (!user) {
+                        return false;
+                    }
 
-                const source = user.password;
-                return Bcrypt.compare(password, source);
-            })
-            .then((passwordMatch)=>{
-                if(passwordMatch){
-                    return user;
-                }
-            });
+                    const source = user.password;
+                    return Bcrypt.compare(password, source);
+                })
+                .then((passwordMatch) => {
+                    if (passwordMatch) {
+                        return user;
+                    }
+                });
         }
     };
 

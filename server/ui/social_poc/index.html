@@ -17,44 +17,28 @@
             <form class="form-signin" data-ember-action="2">
                 <h2 class="form-signin-heading">Sign in</h2>
 
-                <small class="text-muted">Connect [your service] with your favorite social network</small>
+                <small class="text-muted">Connect with your favorite social network</small>
                 <br><br>
 
 
                 <p>
-                    <a class="btn btn-primary social-login-btn social-facebook" href="http://localhost:8125/login/facebook"><i class="fa fa-facebook"></i></a>
+                    <a class="btn btn-primary social-login-btn social-facebook" href="http://127.0.0.1:8125/login/facebook"><i class="fa fa-facebook"></i></a>
                     <a class="btn btn-primary social-login-btn social-twitter" href="http://localhost:8125/login/twitter"><i class="fa fa-twitter"></i></a>
-                </p>
-                <p>
                     <a class="btn btn-primary social-login-btn social-linkedin" href="http://localhost:8125/login/linkedin"><i class="fa fa-linkedin"></i></a>
-                    <a class="btn btn-primary social-login-btn social-google" href="http://localhost:8125/login/google"><i class="fa fa-google"></i></a>
+
                 </p>
                 <p>
+                    <a class="btn btn-primary social-login-btn social-google" href="http://localhost:8125/login/google"><i class="fa fa-google"></i></a>
                     <a class="btn btn-primary social-login-btn social-github" href="http://localhost:8125/login/github"><i class="fa fa-github-alt"></i></a>
                     <a class="btn btn-primary social-login-btn social-instagram" href="http://localhost:8125/login/instagram"><i class="fa fa-instagram"></i></a>
                 </p>
-                <div class="btn-group social-login-more">
 
-                    <ul class="dropdown-menu text-left " role="menu">
-                        <li><a href="#"><i class="fa fa-tumblr-sign"></i>   Tumblr</a></li>
-                        <li><a href="#"><i class="fa fa-github-alt"></i>   Github</a></li>
-                        <li><a href="#"><i class="fa fa-dropbox"></i>   Dropbox</a></li>
-                        <li><a href="/auth/amazon"><span class="zocial-amazon"></span>   Amazon</a></li>
-                        <li><a href="#"><span class="zocial-bitbucket"></span>   Bitbucket</a></li>
-                        <li><a href="#"><span class="zocial-evernote"></span>   Evernote</a></li>
-                        <li><a href="#"><span class="zocial-meetup"></span>   Meetup</a></li>
-                        <li><a href="#"><i class="fa fa-windows"></i>   Windows Live</a></li>
-                        <li><a href="#"><i class="fa fa-weibo"></i>   Weibo</a></li>
-                        <li><a href="#"><i class="fa fa-foursquare"></i>   Foursquare</a></li>
-                        <li><a href="#"><i class="fa fa-stackexchange"></i>   Stack Exchange</a></li>
-                        <li><a href="#"><i class="fa fa-trello"></i>   Trello</a></li>
-                        <li><a href="#"><span class="zocial-wordpress"></span>   Wordpress</a></li>
-                    </ul>
-                </div>
+                <h2 class="form-signin-heading">SSO </h2>
+                <small class="text-muted">SSOCircle (SMAL)</small>
+                <a class="btn btn-primary btn-social btn-openid" href="http://localhost:8125/login/sso/SSOCircle/metadata.xml"><i class="fa fa-superpowers"> metadata</i></a>
+                <a class="btn btn-primary btn-social btn-openid" href="http://localhost:8125/login/sso/SSOCircle"><i class="fa fa-superpowers"></i> Login</a>
                 <br><br>
-
-
-                <small class="text-muted">Or sign in with [your service]</small>
+                <small class="text-muted">Or sign in with </small>
                 <br><br>
 
                 <input id="ember360" class="ember-view ember-text-field form-control login-input" placeholder="Email Address" type="text">
