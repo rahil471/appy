@@ -19,7 +19,7 @@ const expect = Code.expect;
 //const User = mongoose.model('user',userschema);
 
 //const usertests = require('./unit.spec');
-describe('Functional Tests - Saml |', () => {
+describe('Unit Tests - Saml |', () => {
     let server;
     // let User;
     let useroperations;
