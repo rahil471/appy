@@ -22,6 +22,7 @@ const Role = mongoose.model('role');
 const Permission = mongoose.model('permission');
 const Social = mongoose.model('connection/social');
 const Saml = mongoose.model('saml');
+const Session = mongoose.model('session');
 
 const saml2 = require('saml2-js');
 
@@ -55,7 +56,8 @@ class UserOperations {
                 user.identities[userdata.provider] = { id: userdata.id };
                 return user;
             })
-            .then(user => User.create(user))
+            // .then(user => User.create(user))
+            .then(user => RestHapi.create(User, user, Log))
             .then(result => {
                 Log.note("user created successful ->" + result._id);
                 return result._id
@@ -108,6 +110,52 @@ class UserOperations {
     }
 
     /**
+     * Generate Standard Token
+     * @function
+     * @param {object} user - user data 
+     * @param {array} user - scope assigned to user 
+     * @param {instance} Log - log instance 
+     */
+    getStandardToken(user, scope, Log) {
+        switch (authStrategy) {
+            case AUTH_STRATEGIES.TOKEN:
+                return Token(user, null, scope, expirationPeriod.long, Log);
+                break;
+            case AUTH_STRATEGIES.SESSION:
+                return null;
+                break;
+            case AUTH_STRATEGIES.REFRESH:
+                return Token(user, null, scope, expirationPeriod.short, Log);
+                break;
+            default:
+                break;
+        }
+    }
+
+    /**
+     * Generate Refresh Token
+     * @function
+     * @param {object} user - user session instence in session database 
+     * @param {array} user - scope assigned to user 
+     * @param {instance} Log - log instance 
+     */
+    getRefreshToken(session, scope, Log) {
+        switch (authStrategy) {
+            case AUTH_STRATEGIES.TOKEN:
+                return null;
+                break;
+            case AUTH_STRATEGIES.SESSION:
+                return null;
+                break;
+            case AUTH_STRATEGIES.REFRESH:
+                return Token(null, session, scope, expirationPeriod.long, Log);
+                break;
+            default:
+                break;
+        }
+    }
+
+    /**
      * Generate Token
      * @function
      * @param {object} userId - mongoose id (_id) of user 
@@ -120,24 +168,33 @@ class UserOperations {
             authHeader: "",
             scope: []
         }
+        let session;
 
-        return User.findOne({ _id: userId }, { password: 0 })
+        return User.findOne({ _id: userId }, 'firstName lastName email password role createdAt updatedAt')
             .then(result => {
                 response.user = result;
+                return null;
+            })
+            .then(_ => (authStrategy === AUTH_STRATEGIES.TOKEN) ? null : Session.createInstance(response.user))
+            .then(sessionData => {
+                session = sessionData;
                 return null;
             })
             .then(_ => Permission.getScope(response.user, Log))
             .then(scope => { response.scope = scope; return null; })
             .then(_ => {
-                let authHeader = 'Bearer ' + Token(response.user, null, response.scope, expirationPeriod.short, Log);
+                let authHeader = 'Bearer ' + this.getStandardToken(response.user, response.scope, Log);
                 response.authHeader = authHeader;
                 return null;
             })
             .then(_ => {
-                response.refreshToken = Token(response.user, null, response.scope, expirationPeriod.short, Log);
+                response.refreshToken = this.getRefreshToken(session, response.scope, Log);
                 return response;
             })
-            .catch(error => error);
+            .catch(error => {
+                console.log(error);
+                return error;
+            });
     }
 
     /**
