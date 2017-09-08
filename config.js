@@ -42,6 +42,7 @@ const config = {
         local: 'easy',
         $default: 'medium'
     },
+    defaultPassword: "TSHT%$SRYFSR&*SYTD",
     twoFA: true,
     loginWith: ['username'],
     constants: constants,

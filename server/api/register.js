@@ -99,6 +99,7 @@ module.exports = function(server, mongoose, logger) {
         const registerHandler = function(request, reply) {
 
             const mailer = request.server.plugins.mailer;
+            const loginWith = Config.get('/loginWith');
 
             let keyHash = {};
             let user = {};
@@ -113,6 +114,11 @@ module.exports = function(server, mongoose, logger) {
                     originalPassword = user.password;
 
                     user.role = request.pre.role._id;
+                    user.identities = {
+                        "local": {
+                            id: user[loginWith[0]]
+                        }
+                    }
 
                     user.isActive = false;
                     user.activateAccount = {

@@ -125,6 +125,7 @@ internals.applyRefreshStrategy = function (server, next) {
       let session = {};
 
       //EXPL: if the token does not contain session info, then simply authenticate and continue
+      console.log(decodedToken);
       if (decodedToken.user) {
         user = decodedToken.user;
 
@@ -143,7 +144,7 @@ internals.applyRefreshStrategy = function (server, next) {
             if (!session) {
               return callback(null, false);
             }
-
+            //TODO: Here old session should be deleted and new session must be created and sent - Rahil
             return User.findById(session.user);
           })
           .then(function (result) {

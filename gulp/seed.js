@@ -122,6 +122,11 @@ gulp.task('seed', [], function() {
                             lastName: 'manager',
                             email: 'manager@gmail.com',
                             username: 'manager@gmail.com',
+                            identities: {
+                                local: {
+                                    id: 'manager@gmail.com'
+                                }
+                            },
                             password: password,
                             role: roles[1]._id,
                             isActive: true
@@ -130,6 +135,11 @@ gulp.task('seed', [], function() {
                             lastName: 'normal',
                             email: 'user@gmail.com',
                             username: 'user@gmail.com',
+                            identities: {
+                                local: {
+                                    id: 'user@gmail.com'
+                                }
+                            },
                             password: password,
                             role: roles[0]._id,
                             isActive: true
@@ -139,6 +149,11 @@ gulp.task('seed', [], function() {
                             lastName: 'admin',
                             email: 'admin@gmail.com',
                             username: 'admin@gmail.com',
+                            identities: {
+                                local: {
+                                    id: 'admin@gmail.com'
+                                }
+                            },
                             password: password,
                             role: roles[1]._id,
                             isActive: true
@@ -148,6 +163,11 @@ gulp.task('seed', [], function() {
                             lastName: 'superadmin',
                             email: 'superadmin@gmail.com',
                             username: 'superadmin@gmail.com',
+                            identities: {
+                                local: {
+                                    id: 'superadmin@gmail.com'
+                                }
+                            },
                             password: password,
                             role: roles[2]._id,
                             isActive: true
