@@ -106,6 +106,7 @@ module.exports = function(server, mongoose, logger) {
                         }
                     }
                     user.password = defaultPwd;
+                    const scope = user.ldapGroups || [];
                     User.update({"username": user.username}, {$set: user }, {upsert: true})
                     .then(result => User.findOne({"username": user.username})
                     .then(result => {
@@ -115,10 +116,10 @@ module.exports = function(server, mongoose, logger) {
                         return result;
                     })
                     .then(result => Session.createInstance(result))
-                    .then((session) => Token(null, session, [], expirationPeriod.long, Log)))
+                    .then((session) => Token(null, session, scope, expirationPeriod.long, Log)))
                     .then((refreshToken) => {
                         response.refreshToken = refreshToken;
-                        return Token(user, null, [], expirationPeriod.short, Log);
+                        return Token(user, null, scope, expirationPeriod.short, Log);
                     })
                     .then(authToken => {
                         response.authHeader = 'Bearer '+ authToken;                        

@@ -57,7 +57,7 @@ module.exports = function(mongoose) {
                 type: Types.String,
                 default: "mail" 
             },
-            groups: {
+            ldapGroups: {
                 type: Types.String,
                 required: true,
                 default: "groups"
@@ -85,7 +85,7 @@ module.exports = function(mongoose) {
                     payload.profileMapping.firstName = payload.profileMapping.firstName || ["cn", "uid"];
                     payload.profileMapping.lastName = payload.profileMapping.lastName || "sn";
                     payload.profileMapping.email = payload.profileMapping.email || "mail";
-                    payload.profileMapping.ldapGroups = payload.profileMapping.groups || "groups";
+                    payload.profileMapping.ldapGroups = payload.profileMapping.ldapGroups || "groups";
                     payload.profileMapping.dn = payload.profileMapping.dn || "dn";
                     payload.profileMapping.postalCode = payload.profileMapping.postalCode || "postalCode";
                     return payload;

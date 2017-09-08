@@ -125,7 +125,6 @@ internals.applyRefreshStrategy = function (server, next) {
       let session = {};
 
       //EXPL: if the token does not contain session info, then simply authenticate and continue
-      console.log(decodedToken);
       if (decodedToken.user) {
         user = decodedToken.user;
 
