@@ -249,7 +249,7 @@ module.exports = function(mongoose) {
                 },
             ],
             create: {
-                pre: function(payload, Log) {
+                pre: function(payload, request, Log) {
 
                     return mongoose.model('user').generatePasswordHash(payload.password, Log)
                         .then(function(hashedPassword) {
