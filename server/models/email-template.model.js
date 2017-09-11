@@ -42,8 +42,9 @@ module.exports = function(mongoose) {
     }, { collection: modelName });
 
     Schema.statics = {
-        collectionName: collectionNameSwagger,
+        collectionName: modelName,
         routeOptions: {
+            alias: "email/template",
             associations: {}
         }
     };

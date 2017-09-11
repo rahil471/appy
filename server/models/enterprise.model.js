@@ -5,7 +5,6 @@ const Config = require('../../config');
 
 module.exports = function(mongoose) {
     var modelName = "enterprise";
-    var collectionNameSwagger = "connection/enterprise";
     var Types = mongoose.Schema.Types;
     var Schema = new mongoose.Schema({
         url: {
@@ -39,8 +38,9 @@ module.exports = function(mongoose) {
     }, { collection: modelName });
 
     Schema.statics = {
-        collectionName: collectionNameSwagger,
+        collectionName: modelName,
         routeOptions: {
+            alias: "connection/enterprise",
             associations: {}
         }
     };

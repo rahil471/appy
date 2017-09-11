@@ -20,7 +20,7 @@ const AuthAttempt = mongoose.model('authAttempt');
 const User = mongoose.model('user');
 const Role = mongoose.model('role');
 const Permission = mongoose.model('permission');
-const Social = mongoose.model('connection/social');
+const Social = mongoose.model('social');
 const Saml = mongoose.model('saml');
 const Session = mongoose.model('session');
 
@@ -243,7 +243,7 @@ class UserOperations {
      * Configer ServiceProvider and IdentityProvider 
      * @function 
      */
-    initProvider(providerType, configData, clientURL) {
+    initProvider(providerType, configData, clientURL, Log) {
         return new Promise((resolve, reject) => {
             const schema = Joi.object().keys({
                 provider: Joi.string().required(),
