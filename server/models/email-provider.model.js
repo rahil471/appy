@@ -5,7 +5,6 @@ const Config = require('../../config');
 
 module.exports = function(mongoose) {
     var modelName = "email-provider";
-    var collectionNameSwagger = "email/provider";
     var Types = mongoose.Schema.Types;
     var Schema = new mongoose.Schema({
         from: {
@@ -31,11 +30,12 @@ module.exports = function(mongoose) {
     }, { collection: modelName });
 
     Schema.statics = {
-        collectionName: collectionNameSwagger,
+        collectionName: modelName,
         scope: {
             deleteScope: "superadmin",
         },
         routeOptions: {
+            alias: "email/provider",
             associations: {}
         }
     };
