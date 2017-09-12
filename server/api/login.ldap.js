@@ -38,7 +38,8 @@ module.exports = function(server, mongoose, logger) {
                 assign: "ldapconnection",
                 method: function(request, reply){
                     const condition = {
-                        connectionName: request.params.connector
+                        connectionName: request.params.connector,
+                        isDeleted: false
                     }
                     Ldap.findOne(condition).then((connection)=>{
                         if(!connection){

@@ -100,7 +100,7 @@ const config = {
         },
         toAddress: {
             name: 'Accion',
-            address: 'aic.admin@accionlabs.com'
+            address: 'rahil.shaikh@accionlabs.com'
         }
     },
     clientURL: {
@@ -176,7 +176,7 @@ const config = {
         loglevel: {
             $filter: 'env',
             local: "DEBUG",
-            $default: "ERROR",
+            $default: "DEBUG",
             production: "ERROR"
         }
 

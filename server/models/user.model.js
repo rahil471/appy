@@ -99,12 +99,11 @@ module.exports = function(mongoose) {
         },
         identities: {
             type: Types.Object,
+            exclude: true,
             ldap: {
                 id: {
                     type: Types.String,
                     required: false,
-                    allowOnCreate: false,
-                    allowOnUpdate: false,
                     index:true
                 }
             },
@@ -112,8 +111,6 @@ module.exports = function(mongoose) {
                 id: {
                     type: Types.String,
                     required: false,
-                    allowOnCreate: false,
-                    allowOnUpdate: false,
                     index:true
                 }
             }
