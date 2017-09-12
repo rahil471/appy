@@ -143,7 +143,7 @@ internals.applyRefreshStrategy = function (server, next) {
             if (!session) {
               return callback(null, false);
             }
-
+            //TODO: Here old session should be deleted and new session must be created and sent - Rahil
             return User.findById(session.user);
           })
           .then(function (result) {

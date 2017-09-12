@@ -89,6 +89,10 @@ module.exports = function(server, mongoose, logger) {
 
                     User.findByGivenKey(key, value, password, Log)
                         .then(function(user) {
+                            console.log(user);
+                            if(user === "NO_LOCAL_STRATEGY"){
+                                return reply(Boom.badRequest('Password not set.'));
+                            }
                             return reply(user);
                         })
                         .catch(function(error) {
@@ -679,7 +683,7 @@ module.exports = function(server, mongoose, logger) {
                     return User.generatePasswordHash(request.payload.password, Log);
                 })
                 .then(function(passwordHash) {
-
+                    const key = Config.get('/loginWith')[0];
                     const _id = request.pre.user._id.toString();
                     const update = {
                         $set: {
@@ -689,6 +693,11 @@ module.exports = function(server, mongoose, logger) {
                             resetPassword: undefined
                         }
                     };
+                    if(!request.pre.user.identities.local){
+                        update.$set.identities.local = {
+                            id: request.pre.user[key]
+                        }
+                    }
 
                     return RestHapi.update(User, _id, update);
                 })
@@ -716,70 +725,6 @@ module.exports = function(server, mongoose, logger) {
                     }
                 },
                 pre: resetPasswordPre,
-                plugins: {
-                    'hapi-swagger': {
-                        responseMessages: [
-                            { code: 200, message: 'Success' },
-                            { code: 400, message: 'Bad Request' },
-                            { code: 404, message: 'Not Found' },
-                            { code: 500, message: 'Internal Server Error' }
-                        ]
-                    }
-                }
-            }
-        });
-    }());
-
-    // Two factor Auth OTP validation
-    (function() {
-        const Log = logger.bind(Chalk.magenta("Validate OTP"));
-        const User = mongoose.model('user');
-
-        Log.note("Generating OTP validation End Point!");
-
-        const accountActivationHandler = function(request, reply) {
-            return reply({
-                "user": {
-                    "_id": "595df5fd39d73c2147c2852e",
-                    "firstName": "root",
-                    "lastName": "admin",
-                    "email": "admin@gmail.com",
-                    "username": "admin@gmail.com",
-                    "password": "",
-                    "role": "595df5fd39d73c2147c28522",
-                    "createdAt": "2017-07-06T08:34:05.858Z",
-                    "updatedAt": "2017-07-06T08:34:05.858Z",
-                    "isDeleted": false,
-                    "permissions": [],
-                    "groups": [],
-                    "isActive": true,
-                    "email_verified": false,
-                    "phone_verified": false,
-                    "__v": 0
-                },
-                "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzZXNzaW9uSWQiOiI1OTYzNjNhZWQ2YmJiNjQyNWMzNWMwMjIiLCJzZXNzaW9uS2V5IjoiYTg1OGQ0ZDctM2NmOS00NTU4LTlkMWQtMDYyNzBhZTMwZjNhIiwicGFzc3dvcmRIYXNoIjoiJDJhJDEwJGNCbWhNMGs3WVVRV0lEaGxpWlhqTk9mWHdBbVBzeUZEMUh5Tk1HRnR5S05WVG1wNmJjZjYyIiwic2NvcGUiOlsiQWRtaW4iLCJyb290Il0sImlhdCI6MTQ5OTY4NTgwNiwiZXhwIjoxNDk5NzAwMjA2fQ.I-gQ-L8w-_bYf2MQt9Bq1MrEfoLqo-fXJSRk-aZn3UM",
-                "authHeader": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImZpcnN0TmFtZSI6InJvb3QiLCJsYXN0TmFtZSI6ImFkbWluIiwiZW1haWwiOiJhZG1pbkBnbWFpbC5jb20iLCJyb2xlIjoiNTk1ZGY1ZmQzOWQ3M2MyMTQ3YzI4NTIyIiwiY3JlYXRlZEF0IjoiMjAxNy0wNy0wNlQwODozNDowNS44NThaIiwidXBkYXRlZEF0IjoiMjAxNy0wNy0wNlQwODozNDowNS44NThaIn0sInNjb3BlIjpbIkFkbWluIiwicm9vdCJdLCJpYXQiOjE0OTk2ODU4MDYsImV4cCI6MTQ5OTY4NjQwNn0.lWauPGzNnlh3LpvaOALPNyuBkEkHrIoFbxY7kx5L1nE",
-                "scope": [
-                    "Admin",
-                    "root"
-                ]
-            });
-        };
-
-        server.route({
-            method: 'GET',
-            path: '/login/validateotp',
-            config: {
-                handler: accountActivationHandler,
-                auth: null,
-                description: 'User account activation.',
-                tags: ['api', 'Two factor Authentication'],
-                validate: {
-                    query: {
-                        token: Joi.string().required()
-                    }
-                },
-                pre: null,
                 plugins: {
                     'hapi-swagger': {
                         responseMessages: [

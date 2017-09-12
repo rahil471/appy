@@ -30,7 +30,6 @@ module.exports = function(mongoose) {
         },
         password: {
             type: Types.String,
-            required: true,
             exclude: true,
             allowOnUpdate: false
         },
@@ -99,8 +98,22 @@ module.exports = function(mongoose) {
             ref: "role"
         },
         identities: {
-            type: Types.Mixed,
-            required: false
+            type: Types.Object,
+            exclude: true,
+            ldap: {
+                id: {
+                    type: Types.String,
+                    required: false,
+                    index:true
+                }
+            },
+            local: {
+                id: {
+                    type: Types.String,
+                    required: false,
+                    index:true
+                }
+            }
         },
         resetPassword: {
             token: {
@@ -120,37 +133,53 @@ module.exports = function(mongoose) {
             strategy: {
                 type: Types.String,
                 exclude: true,
+                allowOnCreate: false,
+                allowOnUpdate: false
             },
             totp: {
                 tempSecret:{
                     type: Types.String,
                     exclude: true,
+                    allowOnCreate: false,
+                    allowOnUpdate: false
                 },
                 secret:{
                     type: Types.String,
                     exclude: true,
+                    allowOnCreate: false,
+                    allowOnUpdate: false
                 },
                 dataUrl:{
                     type: Types.String,
                     exclude: true,
+                    allowOnCreate: false,
+                    allowOnUpdate: false
                 },
                 otpauthUrl:{
                     type: Types.String,
                     exclude: true,
+                    allowOnCreate: false,
+                    allowOnUpdate: false
                 }
             },
             enabled: {
                 type: Types.Boolean,
                 exclude: true,
+                allowOnCreate: false,
+                allowOnUpdate: false
             },
             standard: {
                 otp: {
                     type: Types.String,
                     exclude: true,
+                    allowOnCreate: false,
+                    allowOnUpdate: false
                 },
                 otpExp: {
                     type: Types.String,
                     exclude: true,
+                    allowOnCreate: false,
+                    allowOnUpdate: false
                 }
             }
         },
@@ -171,7 +200,7 @@ module.exports = function(mongoose) {
     };
     // Object.assign(userSchemaObj, custUserSchema);
 
-    const Schema = new mongoose.Schema(userSchemaObj, { collection: modelName });
+    const Schema = new mongoose.Schema(userSchemaObj, { collection: modelName, strict: false });
 
     Schema.statics = {
         collectionName: modelName,
@@ -349,14 +378,20 @@ module.exports = function(mongoose) {
             let user = {};
             return this.findOne(query).lean().then((result) => {
                     user = result;
+                    //EXPL: Local strategy should be set for user to login in
                     if (!user) {
                         return false;
                     }
-
+                    if(!user.identities || !user.identities.local) {
+                        return "NO_LOCAL_STRATEGY";
+                    }
                     const source = user.password;
                     return Bcrypt.compare(password, source);
                 })
                 .then((passwordMatch) => {
+                    if (passwordMatch === "NO_LOCAL_STRATEGY") {
+                        return "NO_LOCAL_STRATEGY";
+                    }
                     if (passwordMatch) {
                         return user;
                     }
