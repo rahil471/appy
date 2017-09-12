@@ -161,18 +161,18 @@ module.exports = function(server, mongoose, logger) {
             },
             {
                 assign: 'twofactor',
-                method: function(request, reply){
+                method: function(request, reply) {
                     const isAllowed = Config.get('/twoFA');
-                    if(!isAllowed){
+                    if (!isAllowed) {
                         return reply(false);
                     }
                     let user = request.pre.user;
-                    if(request.pre.user.twofactor && request.pre.user.twofactor.enabled === true){
-                        if(request.headers["x-otp"]){
+                    if (request.pre.user.twofactor && request.pre.user.twofactor.enabled === true) {
+                        if (request.headers["x-otp"]) {
                             return reply(user.twofactor.strategy);
                         } else {
                             //set otp for standard implementation
-                            switch (user.twofactor.strategy){
+                            switch (user.twofactor.strategy) {
                                 case 'standard':
                                     //generate otp
                                     //save otp
@@ -180,20 +180,20 @@ module.exports = function(server, mongoose, logger) {
                                     const key = request.pre.primarykey
                                     const value = request.payload[key];
                                     User.setOtp(key, value, Log)
-                                    .then((result)=> { 
-                                        return Twofactor.sendOtp(user.email, user.phone_number, result.otp, result.otpExp, Log);
-                                    })
-                                    .then(()=>{
-                                        return reply({twofactor: true, message: `An OTP is sent to ${user.email} & ${user.phone_number}`}).code(203).takeover();
-                                    })
-                                    .catch((err)=>{
-                                        Log.error(err);
-                                        return reply(Boom.internal(err));
-                                    });
-                                break;
+                                        .then((result) => {
+                                            return Twofactor.sendOtp(user.email, user.phone_number, result.otp, result.otpExp, Log);
+                                        })
+                                        .then(() => {
+                                            return reply({ twofactor: true, message: `An OTP is sent to ${user.email} & ${user.phone_number}` }).code(203).takeover();
+                                        })
+                                        .catch((err) => {
+                                            Log.error(err);
+                                            return reply(Boom.internal(err));
+                                        });
+                                    break;
                                 case 'totp':
-                                    return reply({twofactor: true, message: "Please enter otp to continue."}).code(203).takeover();
-                                break;
+                                    return reply({ twofactor: true, message: "Please enter otp to continue." }).code(203).takeover();
+                                    break;
                             }
                         }
                     } else {
@@ -203,16 +203,16 @@ module.exports = function(server, mongoose, logger) {
             },
             {
                 assign: 'validateOtp',
-                method: function(request, reply){
+                method: function(request, reply) {
                     //EXPL: If 2fa not enabled, pass.
-                    if(!request.pre.twofactor){
+                    if (!request.pre.twofactor) {
                         return reply();
                     }
-                    const user  = request.pre.user;
+                    const user = request.pre.user;
                     const strategy = user.twofactor.strategy;
                     const otp = request.headers["x-otp"];
                     const verfied = Twofactor.verifyOtp(user, strategy, otp, Log);
-                    if(verfied){
+                    if (verfied) {
                         reply(true);
                     } else {
                         reply(Boom.badRequest("Invalid OTP."))
@@ -221,25 +221,25 @@ module.exports = function(server, mongoose, logger) {
             },
             {
                 assign: 'invalidateOtp',
-                method: function(request, reply){
+                method: function(request, reply) {
                     //EXPL: If 2fa not enabled, pass.
-                    if(!request.pre.twofactor){
+                    if (!request.pre.twofactor) {
                         return reply();
                     }
                     const conditions = {
                         verified: request.pre.vaidateOtp,
                         strategy: request.pre.twofactor
                     }
-                    if(!!conditions.strategy && conditions.strategy === 'standard'){
+                    if (!!conditions.strategy && conditions.strategy === 'standard') {
                         const key = request.pre.primarykey;
                         const value = request.payload[key];
-                        User.unSetOtp(key, value, Log).then(()=>{
-                            return reply(true);
-                        })
-                        .catch((err)=>{
-                            Log.error(err);
-                            return reply(Boom.internal(err));
-                        });
+                        User.unSetOtp(key, value, Log).then(() => {
+                                return reply(true);
+                            })
+                            .catch((err) => {
+                                Log.error(err);
+                                return reply(Boom.internal(err));
+                            });
                     } else {
                         reply();
                     }
@@ -768,7 +768,7 @@ module.exports = function(server, mongoose, logger) {
             path: `/login/sso/{provider}/metadata.xml`,
             config: {
                 handler: (request, reply) => {
-                    userOperations.initProvider('sp', request.pre.saml, clientURL)
+                    userOperations.initProvider('sp', request.pre.saml, clientURL, Log)
                         .then(sp => {
                             reply(sp.create_metadata()).type('application/xml');
                         })
@@ -792,12 +792,12 @@ module.exports = function(server, mongoose, logger) {
             config: {
                 handler: (request, reply) => {
                     let sp, idp;
-                    userOperations.initProvider('sp', request.pre.saml, clientURL)
+                    userOperations.initProvider('sp', request.pre.saml, clientURL, Log)
                         .then(result => {
                             sp = result;
                             return;
                         })
-                        .then(_ => userOperations.initProvider('idp', request.pre.saml, clientURL))
+                        .then(_ => userOperations.initProvider('idp', request.pre.saml, clientURL, Log))
                         .then(result => {
                             idp = result;
                             return;
@@ -829,12 +829,12 @@ module.exports = function(server, mongoose, logger) {
                 handler: (request, reply) => {
                     var options = { request_body: request.payload };
                     var sp, idp;
-                    userOperations.initProvider('sp', request.pre.saml, clientURL)
+                    userOperations.initProvider('sp', request.pre.saml, clientURL, Log)
                         .then(result => {
                             sp = result;
                             return;
                         })
-                        .then(_ => userOperations.initProvider('idp', request.pre.saml, clientURL))
+                        .then(_ => userOperations.initProvider('idp', request.pre.saml, clientURL, Log))
                         .then(result => {
                             idp = result;
                             return;
@@ -849,7 +849,7 @@ module.exports = function(server, mongoose, logger) {
                                     "id": eval(`saml_response.${mapping.id}`),
                                     "firstName": eval(`saml_response.${mapping.firstName}`),
                                     "lastName": eval(`saml_response.${mapping.lastName}`),
-                                    "provider": mapping.provider
+                                    "provider": request.pre.saml.provider
                                 };
                                 return resolve(userdata);
                             });
