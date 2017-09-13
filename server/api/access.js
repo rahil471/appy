@@ -8,23 +8,23 @@ const Config = require('../../config');
 
 const authStrategy = Config.get('/restHapiConfig/authStrategy');
 
-module.exports = function(server, mongoose, logger) {
+module.exports = function (server, mongoose, logger) {
 
-    // Access
-    (function() {
-        const Log = logger.bind(Chalk.magenta("Logout"));
+    // Access  Check
+    (function () {
+        const Log = logger.bind(Chalk.magenta("access"));
         const Session = mongoose.model('session');
+        const User = mongoose.model('user');
 
-        const headersValidation = Joi.object({
+        const checkAccessHeadersValidation = Joi.object({
             'authorization': Joi.string().required(),
             'scope': Joi.string().required()
         }).options({ allowUnknown: true });
 
         Log.note("Check Access");
 
-        const accessHandler = function(request, reply) {
-            console.log(request.auth.credentials.scope);
-            console.log(request.headers.scope);
+        const checkAccessHandler = function (request, reply) {
+
             const credentials = request.auth.credentials || { session: null };
             // const session = credentials.session;
             request.auth.credentials.scope = request.auth.credentials.scope || [];
@@ -39,12 +39,12 @@ module.exports = function(server, mongoose, logger) {
             method: 'get',
             path: '/access/check',
             config: {
-                handler: accessHandler,
+                handler: checkAccessHandler,
                 auth: authStrategy,
                 description: 'Check Access.',
                 tags: ['api', 'Access', 'checkaccess'],
                 validate: {
-                    headers: headersValidation
+                    headers: checkAccessHeadersValidation
                 },
                 plugins: {
                     'hapi-swagger': {
@@ -58,36 +58,95 @@ module.exports = function(server, mongoose, logger) {
                 }
             }
         });
-    }());
 
-    // Account Lock
-    (function() {
-        const Log = logger.bind(Chalk.magenta("Logout"));
-        const Session = mongoose.model('session');
-
-        const headersValidation = Joi.object({
+        // Account Lock
+        const accessLockHeadersValidation = Joi.object({
             'authorization': Joi.string().required()
         }).options({ allowUnknown: true });
 
-        Log.note("Account Lock");
+        function lockUnlockUserAccess(lock, user, hours, datetime) {
 
-        const accessHandler = function(request, reply) {
-            return reply({ message: 'Success.' });
+            if (typeof user !== 'object') {
+                let tmp = user;
+                user = [];
+                user.push(tmp)
+            }
+            let timeout;
+            if (datetime) {
+                timeout = datetime;
+            } else {
+                if (hours !== 0) {
+                    timeout = new Date();
+                    timeout.setUTCHours(timeout.getUTCHours() + hours);
+                    timeout = timeout.toUTCString();
+                } else {
+                    timeout = 0;
+                }
+            }
+            user = user.map(function (id) { return mongoose.Types.ObjectId(id) });
+            let query = {
+                "_id": {
+                    $in: user
+                }
+            }
+            let update = {
+                $set: {
+                    "access_lock_timeout": timeout
+                }
+            }
+            let removeQuery = {
+                "user": {
+                    $in: user
+                }
+            }
+            if (lock) {
+                return User.update(query, update, { "multi": "true" })
+                    .then(_ => Session.remove(removeQuery), { "multi": true })
+                    .catch(error => {
+                        Log.error(error);
+                        return error;
+                    });
+            }
+            return User.update(query, update, { "multi": "true" })
+                .then(result => {
+                    return null;
+                })
+                .catch(error => {
+                    Log.error(error);
+                    return error;
+                });
+        }
+
+        const accessLockHandler = function (request, reply) {
+
+            lockUnlockUserAccess(true, request.payload.userID, request.payload.locktimeout, request.payload.datetime)
+                .then(result => {
+                    return reply({
+                        message: 'success',
+                        error: 0
+                    });
+                })
+                .catch(error => {
+                    Log.error(error);
+                    return reply(Boom.internal('Error while updating user access.'));
+                });
+
         };
 
         server.route({
             method: 'post',
             path: '/access/lock',
             config: {
-                handler: accessHandler,
+                handler: accessLockHandler,
                 auth: authStrategy,
                 description: 'Account Lock.',
                 tags: ['api', 'Access', 'Account Lock'],
                 validate: {
-                    headers: headersValidation,
-                    query: {
-                        userid: Joi.string().required(),
-                        locktimeout: Joi.string().required()
+                    headers: accessLockHeadersValidation,
+                    payload: {
+                        'userID': Joi.array().items(Joi.string()).required(),
+                        'locktimeout': Joi.number(),
+                        'datetime': Joi.string()
                     }
                 },
                 plugins: {
@@ -102,35 +161,41 @@ module.exports = function(server, mongoose, logger) {
                 }
             }
         });
-    }());
 
-    // Account Unlock
-    (function() {
-        const Log = logger.bind(Chalk.magenta("Logout"));
-        const Session = mongoose.model('session');
+        // Account Unlock
 
-        const headersValidation = Joi.object({
+        const accessUnlockHeadersValidation = Joi.object({
             'authorization': Joi.string().required()
         }).options({ allowUnknown: true });
 
         Log.note("Account Unlock");
 
-        const accessHandler = function(request, reply) {
-            return reply({ message: 'Success.' });
+        const accessUnlockHandler = function (request, reply) {
+            lockUnlockUserAccess(false, request.payload.userID, 0) //default IOS time(00-00-0000 00:00:00)
+                .then(result => {
+                    return reply({
+                        message: 'success',
+                        error: 0
+                    });
+                })
+                .catch(error => {
+                    Log.error(error);
+                    return reply(Boom.internal('Error while updating user access.'));
+                });
         };
 
         server.route({
             method: 'post',
             path: '/access/unlock',
             config: {
-                handler: accessHandler,
+                handler: accessUnlockHandler,
                 auth: authStrategy,
                 description: 'Account Unlock.',
                 tags: ['api', 'Access', 'Account Unlock'],
                 validate: {
-                    headers: headersValidation,
-                    query: {
-                        userid: Joi.string().required()
+                    headers: accessUnlockHeadersValidation,
+                    payload: {
+                        userID: Joi.array().items(Joi.string()).required()
                     }
                 },
                 plugins: {

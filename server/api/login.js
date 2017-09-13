@@ -87,27 +87,57 @@ module.exports = function(server, mongoose, logger) {
                     const value = request.payload[key];
                     const password = request.payload.password;
 
-                    User.findByGivenKey(key, value, password, Log)
-                        .then(function(user) {
-                            console.log(user);
-                            if(user === "NO_LOCAL_STRATEGY"){
-                                return reply(Boom.badRequest('Password not set.'));
-                            }
-                            return reply(user);
-                        })
-                        .catch(function(error) {
-                            Log.error(error);
-                            return reply(Boom.gatewayTimeout('An error occurred.'));
-                        });
+                User.findByGivenKey(key, value, password, Log)
+                    .then(function(user) {
+                        if(user === "NO_LOCAL_STRATEGY"){
+                            return reply(Boom.badRequest('Password not set.'));
+                        }
+                        return reply(user);
+                    })
+                    .catch(function(error) {
+                        Log.error(error);
+                        return reply(Boom.gatewayTimeout('An error occurred.'));
+                    });
+            }
+        },
+        {
+            assign: 'accessLock',
+            method: function (request, reply) {
+                function MillisecondsToTime(duration) {
+                    var seconds = parseInt((duration / 1000) % 60)
+                        , minutes = parseInt((duration / (1000 * 60)) % 60)
+                        , hours = parseInt((duration / (1000 * 60 * 60)) % 24)
+                        , days = parseInt(duration / (1000 * 60 * 60 * 24));
+
+                    var hoursDays = parseInt(days * 24);
+                    // hours += hoursDays;
+                    hours = (hours < 10) ? "0" + hours : hours;
+                    minutes = (minutes < 10) ? "0" + minutes : minutes;
+                    seconds = (seconds < 10) ? "0" + seconds : seconds;
+                    return days + " Days " + hours + ":" + minutes + ":" + seconds + " Hours";
                 }
-            },
-            {
-                assign: 'logAttempt',
-                method: function(request, reply) {
-                    const key = request.pre.primarykey
-                    if (request.pre.user) {
-                        return reply();
+                if (request.pre.user.access_lock_timeout) {
+                    let todayDate = new Date();
+                    let dateUTC = Date.parse(todayDate.toUTCString());
+                    let lockDate = Date.parse(request.pre.user.access_lock_timeout);
+
+                    if (lockDate - dateUTC >= 0) {
+                        return reply(Boom.gatewayTimeout('Access Locked By Admin For ' + MillisecondsToTime(lockDate - dateUTC)));
+                    } else {
+                        return reply(lockDate - dateUTC);
                     }
+                } else {
+                    return reply(null);
+                }
+            }
+        },
+        {
+            assign: 'logAttempt',
+            method: function(request, reply) {
+                const key = request.pre.primarykey
+                if (request.pre.user) {
+                    return reply();
+                }
 
                     const ip = request.info.remoteAddress;
                     const logonid = request.payload[key];
@@ -373,7 +403,7 @@ module.exports = function(server, mongoose, logger) {
                         ]
                     }
                 }
-            },
+            }
         });
     }());
 
@@ -387,11 +417,11 @@ module.exports = function(server, mongoose, logger) {
         const userOperations = new UserOperations();
 
         /**
-         * initialize provider for social login 
+         * initialize provider for social login
          * @function
          * @param {string} provider - social login provider name ex.google
          * @param {instance} strategy - passport strategy
-         * @param {object} credentials - provider app credentials 
+         * @param {object} credentials - provider app credentials
          */
         function initSocial(provider, strategy, credentials) {
             return passport(new strategy(credentials, function verify(accessToken, refreshToken, profile, verified) {
@@ -412,8 +442,8 @@ module.exports = function(server, mongoose, logger) {
         }
 
         /**
-         * checks for provider settings are present in database or not! 
-         * @function 
+         * checks for provider settings are present in database or not!
+         * @function
          */
         const socialLoginPre = [{
             assign: 'social',
@@ -432,7 +462,7 @@ module.exports = function(server, mongoose, logger) {
         }];
 
         /**
-         * provides the strategy instance of requested provider!  
+         * provides the strategy instance of requested provider!
          * @function
          * @param {string} provider - social login provider name ex.google
          */
@@ -745,8 +775,8 @@ module.exports = function(server, mongoose, logger) {
         const userOperations = new UserOperations();
 
         /**
-         * checks for provider settings are present in database or not! 
-         * @function 
+         * checks for provider settings are present in database or not!
+         * @function
          */
         const samlLoginPre = [{
             assign: 'saml',
