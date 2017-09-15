@@ -121,6 +121,10 @@ const config = {
         production: constants.HOST_PRODUCTION + constants.PORT + '/static/social_poc/error.html',
         $default: constants.HOST_DEFAULT + constants.PORT + '/static/social_poc/error.html'
     },
+    preferences:{
+        "notification":true,
+        "dnd":false
+    },
     restHapiConfig: {
         appTitle: constants.APP_TITLE,
         mongo: {

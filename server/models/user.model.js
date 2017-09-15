@@ -6,7 +6,7 @@ const Bcrypt = require('bcryptjs');
 const Chalk = require('chalk');
 const custUserSchema = require("../../cust-schema").user;
 
-module.exports = function(mongoose) {
+module.exports = function (mongoose) {
     const modelName = "user";
     const Types = mongoose.Schema.Types;
     const userSchemaObj = {
@@ -98,6 +98,11 @@ module.exports = function(mongoose) {
             type: Types.ObjectId,
             ref: "role"
         },
+        preferences: {
+            type: Types.ObjectId,
+            ref: "preferences",
+            required: false
+        },
         identities: {
             type: Types.Object,
             exclude: true,
@@ -105,14 +110,14 @@ module.exports = function(mongoose) {
                 id: {
                     type: Types.String,
                     required: false,
-                    index:true
+                    index: true
                 }
             },
             local: {
                 id: {
                     type: Types.String,
                     required: false,
-                    index:true
+                    index: true
                 }
             }
         },
@@ -142,25 +147,25 @@ module.exports = function(mongoose) {
                 allowOnUpdate: false
             },
             totp: {
-                tempSecret:{
+                tempSecret: {
                     type: Types.String,
                     exclude: true,
                     allowOnCreate: false,
                     allowOnUpdate: false
                 },
-                secret:{
+                secret: {
                     type: Types.String,
                     exclude: true,
                     allowOnCreate: false,
                     allowOnUpdate: false
                 },
-                dataUrl:{
+                dataUrl: {
                     type: Types.String,
                     exclude: true,
                     allowOnCreate: false,
                     allowOnUpdate: false
                 },
-                otpauthUrl:{
+                otpauthUrl: {
                     type: Types.String,
                     exclude: true,
                     allowOnCreate: false,
@@ -225,11 +230,15 @@ module.exports = function(mongoose) {
                     alias: "permission",
                     model: "permission",
                     linkingModel: "user_permission"
-                }
+                },
+                preferences: {
+                    type: "ONE_ONE",
+                    model: "preferences"
+                },
             },
             extraEndpoints: [
                 // Check Email Endpoint
-                function(server, model, options, Log) {
+                function (server, model, options, Log) {
                     Log = Log.bind(Chalk.magenta("Check Email"));
                     const User = model;
 
@@ -237,10 +246,10 @@ module.exports = function(mongoose) {
 
                     Log.note("Generating Check Email endpoint for " + collectionName);
 
-                    const checkEmailHandler = function(request, reply) {
+                    const checkEmailHandler = function (request, reply) {
 
                         User.findOne({ email: request.payload.email })
-                            .then(function(result) {
+                            .then(function (result) {
                                 if (result) {
                                     Log.log("Email already exists.");
                                     return reply(true);
@@ -249,7 +258,7 @@ module.exports = function(mongoose) {
                                     return reply(false);
                                 }
                             })
-                            .catch(function(error) {
+                            .catch(function (error) {
                                 Log.error(error);
                                 return reply(Boom.badImplementation('There was an error accessing the database.'));
                             });
@@ -283,10 +292,10 @@ module.exports = function(mongoose) {
                 },
             ],
             create: {
-                pre: function(payload, request, Log) {
+                pre: function (payload, request, Log) {
 
                     return mongoose.model('user').generatePasswordHash(payload.password, Log)
-                        .then(function(hashedPassword) {
+                        .then(function (hashedPassword) {
                             payload.password = hashedPassword.hash;
                             return payload;
                         });
@@ -294,18 +303,18 @@ module.exports = function(mongoose) {
             }
         },
 
-        generatePasswordHash: function(password, Log) {
+        generatePasswordHash: function (password, Log) {
 
             return Bcrypt.genSalt(10)
-                .then(function(salt) {
+                .then(function (salt) {
                     return Bcrypt.hash(password, salt);
                 })
-                .then(function(hash) {
+                .then(function (hash) {
                     return { password, hash };
                 });
         },
 
-        findByCredentials: function(email, password, Log) {
+        findByCredentials: function (email, password, Log) {
 
             const self = this;
 
@@ -316,7 +325,7 @@ module.exports = function(mongoose) {
             let user = {};
 
             return self.findOne(query).lean()
-                .then(function(result) {
+                .then(function (result) {
                     user = result;
 
                     if (!user) {
@@ -327,72 +336,72 @@ module.exports = function(mongoose) {
 
                     return Bcrypt.compare(password, source);
                 })
-                .then(function(passwordMatch) {
+                .then(function (passwordMatch) {
                     if (passwordMatch) {
                         return user;
                     }
                 });
         },
 
-        setOtp: function(key, value, Log){
-            const otp = Math.floor(Math.random()*90000) + 10000;
+        setOtp: function (key, value, Log) {
+            const otp = Math.floor(Math.random() * 90000) + 10000;
             const otpExp = Date.now() + (30 * 60 * 1000);
             const query = {
                 [key]: value
             };
             const update = {
-                $set : {
+                $set: {
                     'twofactor.standard': {
                         otp: otp,
                         otpExp: otpExp
                     }
                 }
             };
-            return this.update(query, update).then((result)=>{
+            return this.update(query, update).then((result) => {
                 result.otp = otp;
                 result.otpExp = otpExp;
                 return result;
             });
         },
 
-        unSetOtp: function(key, value, Log){
+        unSetOtp: function (key, value, Log) {
             const otp = "";
             const otpExp = "";
             const query = {
                 [key]: value
             };
             const update = {
-                $set : {
+                $set: {
                     'twofactor.standard': {
                         otp: otp,
                         otpExp: otpExp
                     }
                 }
             };
-            return this.update(query, update).then((result)=>{
+            return this.update(query, update).then((result) => {
                 result.otp = otp;
                 result.otpExp = otpExp;
                 return result;
             });
         },
 
-        findByGivenKey: function(key, value, password, Log){
+        findByGivenKey: function (key, value, password, Log) {
             const query = {
                 [key]: value
             }
             let user = {};
             return this.findOne(query).lean().then((result) => {
-                    user = result;
-                    //EXPL: Local strategy should be set for user to login in
-                    if (!user) {
-                        return false;
-                    }
-                    if(!user.identities || !user.identities.local) {
-                        return "NO_LOCAL_STRATEGY";
-                    }
-                    const source = user.password;
-                    return Bcrypt.compare(password, source);
-                })
+                user = result;
+                //EXPL: Local strategy should be set for user to login in
+                if (!user) {
+                    return false;
+                }
+                if (!user.identities || !user.identities.local) {
+                    return "NO_LOCAL_STRATEGY";
+                }
+                const source = user.password;
+                return Bcrypt.compare(password, source);
+            })
                 .then((passwordMatch) => {
                     if (passwordMatch === "NO_LOCAL_STRATEGY") {
                         return "NO_LOCAL_STRATEGY";
