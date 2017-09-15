@@ -5,6 +5,8 @@ const Boom = require('boom');
 const Bcrypt = require('bcryptjs');
 const Chalk = require('chalk');
 const custUserSchema = require("../../cust-schema").user;
+const Config = require('../../config');
+const authStrategy = Config.get('/restHapiConfig/authStrategy');
 
 module.exports = function (mongoose) {
     const modelName = "user";
@@ -290,6 +292,111 @@ module.exports = function (mongoose) {
                         }
                     });
                 },
+                function (server, model, options, Log) {
+                    Log = Log.bind(Chalk.magenta("Profile"));
+                    const User = model;
+
+                    const HeadersValidation = Joi.object({
+                        'authorization': Joi.string().required()
+                    }).options({ allowUnknown: true });
+
+                    const updateProfileHandler = function (request, reply) {
+                        let query = { _id: mongoose.Types.ObjectId(request.auth.credentials.user._id) }
+                        let update = {};
+                        let skipForUpdate = ["username", "email", "identities", "password", "role", "createdAt", "updateAt", "__v", "preferences", "isDeleted", "permissions", "groups", "access_lock_timeout", "isActive", "email_verified", "phone_verified"];
+                        Object.keys(request.payload).filter(function (key, index) {
+                            return !skipForUpdate.includes(key);
+                        }).map(item => { update[item] = request.payload[item] });
+
+                        User.update(query, update)
+                            .then(result => reply({ message: "success", error: 0 }))
+                            .catch(error => {
+                                Log.error(error);
+                                return reply(Boom.internal("There some error while update the user profile!"));
+                            })
+
+                    };
+
+                    server.route({
+                        method: 'PUT',
+                        path: '/user/profile',
+                        config: {
+                            handler: updateProfileHandler,
+                            auth: authStrategy,
+                            description: 'Update own profile.',
+                            tags: ['api', 'User', 'Profile'],
+                            validate: {
+                                headers: HeadersValidation,
+                                options: {
+                                    allowUnknown: true
+                                },
+                                payload: {
+                                    firstName: Joi.string().required(),
+                                    lastName: Joi.string().required(),
+                                    picture: Joi.string(),
+                                    phone_number: Joi.number().integer()
+                                }
+                            },
+                            plugins: {
+                                'hapi-swagger': {
+                                    responseMessages: [
+                                        { code: 200, message: 'Success' },
+                                        { code: 400, message: 'Bad Request' },
+                                        { code: 404, message: 'Not Found' },
+                                        { code: 500, message: 'Internal Server Error' }
+                                    ]
+                                }
+                            }
+                        }
+                    });
+                },
+                function (server, model, options, Log) {
+                    Log = Log.bind(Chalk.magenta("Profile"));
+                    const User = model;
+
+                    const HeadersValidation = Joi.object({
+                        'authorization': Joi.string().required()
+                    }).options({ allowUnknown: true });
+
+                    const profileHandler = function (request, reply) {
+                        User.findOne({ _id: request.auth.credentials.user._id }, { password: 0, __v: 0, access_lock_timeout: 0 })
+                            .then(function (result) {
+                                if (result) {
+                                    return reply(result);
+                                } else {
+                                    return reply({ message: "there is some problem while accessing the profile!", error: 1 })
+                                }
+                            })
+                            .catch(function (error) {
+                                Log.error(error);
+                                return reply(Boom.badImplementation('There was an error accessing the database.'));
+                            });
+                    };
+
+                    server.route({
+                        method: 'GET',
+                        path: '/user/profile',
+                        config: {
+                            handler: profileHandler,
+                            auth: authStrategy,
+                            description: 'Get own profile.',
+                            tags: ['api', 'User', 'Profile'],
+                            validate: {
+                                headers: HeadersValidation
+                            },
+                            plugins: {
+                                'hapi-swagger': {
+                                    responseMessages: [
+                                        { code: 200, message: 'Success' },
+                                        { code: 400, message: 'Bad Request' },
+                                        { code: 404, message: 'Not Found' },
+                                        { code: 500, message: 'Internal Server Error' }
+                                    ]
+                                }
+                            }
+                        }
+                    });
+                }
             ],
             create: {
                 pre: function (payload, request, Log) {
