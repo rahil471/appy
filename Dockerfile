@@ -18,4 +18,4 @@ EXPOSE 8125
 
 #RUN gulp seed
 
-CMD ["pm2-docker", "start", "server.js", "--watch"]
+CMD ["pm2-docker", "start", "process.json"]

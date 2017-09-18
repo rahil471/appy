@@ -8,7 +8,6 @@ Dotenv.config({ silent: true });
 const criteria = {
     env: process.env.NODE_ENV
 };
-
 const constants = {
     USER_ROLES: {
         USER: 'User',
@@ -89,9 +88,9 @@ const config = {
      */
     defaultEmail: {
         $filter: 'env',
-        local: 'aic.admin@accionlabs.com',
-        development: 'aic.admin@accionlabs.com',
-        production: 'aic.admin@accionlabs.com'
+        local: 'rahil.shaikh@accionlabs.com',
+        development: 'rahil.shaikh@accionlabs.com',
+        production: null
     },
     system: {
         fromAddress: {

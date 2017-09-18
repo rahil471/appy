@@ -24,9 +24,31 @@ View the swagger docs for the **live demo**:
 
 http://ec2-35-164-131-1.us-west-2.compute.amazonaws.com:8125
 
-### Starting appy
+### Starting Service
 
-![appy_start](https://cloud.githubusercontent.com/assets/12631935/22916596/365770d4-f234-11e6-93eb-ed1825c727df.gif)
+- git clone
+- You can use gulp or pm2 to start the service. It's recomended to use pm2 along with `process.json`
+- Sample `process.json` (Should be placed in project working directory)
+```
+{
+    "apps" : [{
+      "name"        : "abp-users",
+      "script"      : "server.js",
+      "args"        : [],
+      "log_date_format" : "YYYY-MM-DD HH:mm Z",
+      "watch"       : false,
+      "node_args"   : "",
+      "merge_logs"  : false,
+      "cwd"         : "./",
+      "env": {
+          "NODE_ENV": "local",
+          "SMTP_PASSWORD": "test@"
+      }
+    }]
+}
+```
+- `pm2 start process.json`
+- Using docker - `docker-compose up --build`
 
 ### Logging in
 

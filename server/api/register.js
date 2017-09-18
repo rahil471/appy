@@ -135,12 +135,11 @@ module.exports = function(server, mongoose, logger) {
                         const emailOptions = {
                             subject: 'Activate your ' + Config.get('/websiteName') + ' account',
                             to: {
-                                name: request.payload.firstName + " " + request.payload.lastName,
+                                name: request.payload.user.firstName + " " + request.payload.user.lastName,
                                 address: user.email
                             }
                         };
                         const template = 'welcome';
-
                         const token = Jwt.sign({
                             email: user.email,
                             key: keyHash.key
@@ -161,7 +160,7 @@ module.exports = function(server, mongoose, logger) {
                         const emailOptions = {
                             subject: 'Invitation to ' + Config.get('/websiteName'),
                             to: {
-                                name: request.payload.firstName + " " + request.payload.lastName,
+                                name: request.payload.user.firstName + " " + request.payload.user.lastName,
                                 address: user.email
                             }
                         };
